@@ -2,9 +2,10 @@
 knitr::opts_chunk$set(
 collapse = TRUE,
 message = FALSE,
+fig.width = 7,
 comment = "#>")
 
-## ---- message = FALSE, fig.width = 7-------------------------------------
+## ---- message = FALSE----------------------------------------------------
 library(metR)
 library(ggplot2)
 library(data.table)
@@ -15,7 +16,7 @@ temperature[, air.z := Anomaly(air), by = .(lat, lev)]
 (g <- ggplot(temperature[lon %~% 180], aes(lat, lev, z = air.z)) +
         geom_contour(aes(color = ..level..)))
 
-## ---- fig.width = 7------------------------------------------------------
+## ------------------------------------------------------------------------
 g + 
     scale_y_level() +
     scale_x_latitude(ticks = 15, limits = c(-90, 90)) +
@@ -43,7 +44,7 @@ ggplot(v, aes(Var1, Var2, z = value.gap)) +
     geom_contour_fill(breaks = breaks, na.fill = TRUE) +
     geom_point(data = v[is.na(value.gap)], size = 0.1, alpha = 0.3)
 
-## ----  fig.width = 7-----------------------------------------------------
+## ------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
     geom_contour_fill() +
     scale_fill_divergent() +
@@ -96,7 +97,7 @@ ggplot(v, aes(Var1, Var2, z = value.gap)) +
     stat_subset(aes(subset = is.na(value.gap)), geom = "raster", 
                 fill = "#EBEBEB")
 
-## ---- fig.width = 7------------------------------------------------------
+## ------------------------------------------------------------------------
 temperature[, c("t.dx", "t.dy") := Derivate(air.z ~ lon + lat,
                                             cyclical = c(TRUE, FALSE)), 
             by = lev]

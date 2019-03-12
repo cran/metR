@@ -2,6 +2,7 @@
 knitr::opts_chunk$set(
 collapse = TRUE,
 comment = "#>",
+fig.width = 7,
 cache = FALSE
 )
 
@@ -76,11 +77,9 @@ ggplot(eof$right, aes(lon, lat)) +
     coord_polar() +
     facet_wrap(~PC) 
 
-DivideTimeseries(
-    ggplot(eof$left, aes(date, gh.t.w)) +
+ggplot(eof$left, aes(date, gh.t.w)) +
         geom_line(aes(color = PC)) +
-        scale_x_date(expand = c(0, 0)), 
-    eof$left$date, n = 2, xlab = "date", ylab = "gh.t.w")
+        scale_x_date(expand = c(0, 0))
 
 ## ------------------------------------------------------------------------
 geopotential <- geopotential[]
