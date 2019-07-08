@@ -14,7 +14,7 @@ library(ggplot2)
 # If out = "vars", returns information about the available variables and 
 # dimensions
 file <- system.file("extdata", "temperature.nc", package = "metR")
-str(ReadNetCDF(file, out = "vars"))
+GlanceNetCDF(file)
 
 ## ------------------------------------------------------------------------
 air <- ReadNetCDF(file, subset = list(lat = 90:0, level = 925))

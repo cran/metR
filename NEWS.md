@@ -1,3 +1,23 @@
+# metR 0.4.0
+
+## New features
+
+- New `GlanceNetCDF()` function that is an alias for `ReadNetCDF(out = "vars")` but now prints a human readable summary of the contents of the NetCDF file.
+
+- `geom_streamline()` now uses 4th order Runge-Kutta insteaf of plain old Euler. It also draws arrows in the middle of the streamline. 
+
+- `ReadNetCDF()` is slightly faster and should use less memory. 
+
+- `ReadNetCDF()` supports more complex subsetting operations now. 
+
+- The `df` element returned by `FitLm()` now has the same length as the rest. 
+    
+## Bugfixes
+
+- `ReadNetCDF()` result will print correctly. 
+
+
+
 # metR 0.3.0 - Cumulonimbus
 
 ## New features
