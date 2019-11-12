@@ -1,4 +1,28 @@
-# metR 0.4.0
+# metR 0.5.0 - Incus
+
+## New features
+
+- `ReadNetCDF()` suports using `NA` in subset to refer to max or min value. 
+
+- `ReadNetCDF()`'s subset argument supports more complex queries. (see the help 
+section at`?ReadNetCDF()`). 
+
+- `ReadNetCDF()` now has a simple date-time parser that is tried if the udunits2 package
+is not installed. 
+
+- `GetSMNData()` gains the ability to cache results in a file. 
+
+- `Derivate()` now can derive in a non-equispaced grid. 
+
+## Bugfixes
+
+- `geom_contour_fill()` imputation method is fixed for some special cases (#96; thanks @bergmul).
+
+- `predict.eof()` handles complex value svd correctly.
+
+- Accommodates new grid implementation of units (#105 thanks @pmur002).
+
+# metR 0.4.0 - Cumulonimbus
 
 ## New features
 
@@ -15,8 +39,6 @@
 ## Bugfixes
 
 - `ReadNetCDF()` result will print correctly. 
-
-
 
 # metR 0.3.0 - Cumulonimbus
 

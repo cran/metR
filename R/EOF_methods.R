@@ -76,7 +76,7 @@ predict.eof <- function(object, n = NULL, ...) {
 
     dt <- cbind(.extend.dt(left$coldims, each = nrow(right$coldims)),
                 .extend.dt(right$coldims, n = nrow(left$coldims)),
-                c(t(right$matrix)%*%left$matrix))
+                c(Conj(t(right$matrix))%*%left$matrix))
     colnames(dt)[length(colnames(dt))] <- value.var
     return(dt)
 }
@@ -145,3 +145,23 @@ if(getRversion() >= "2.15.1") {
     utils::globalVariables("cum.r2")
 }
 
+
+#' Denormalize eof matrices
+#'
+#' The matrices returned by [EOF()] are normalized. This function multiplies the left or right
+#' matrix by the diagonal matrix to return to proper units.
+#'
+#' @param eof an `eof` object.
+#' @param which which side of the eof decomposition to denormaliza
+#'
+#'
+#' @export
+denormalize <- function(eof, which = c("left", "right")) {
+    .check_eof(eof)
+    which <- which[1]
+    name <-  attr(eof, "value.var")
+
+    value <- eof[[which]][eof[["sdev"]], on = attr(eof, "suffix")][,  get(name)*sd]
+
+    copy(eof[[which]])[, (name) := value][]
+}

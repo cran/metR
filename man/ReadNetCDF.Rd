@@ -8,7 +8,7 @@
 ReadNetCDF(file, vars = NULL, out = c("data.frame", "vector", "array"),
   subset = NULL, key = FALSE)
 
-GlanceNetCDF(file)
+GlanceNetCDF(file, ...)
 }
 \arguments{
 \item{file}{file to read from.}
@@ -21,6 +21,9 @@ GlanceNetCDF(file)
 \item{subset}{a list of subsetting objects. See below.}
 
 \item{key}{if \code{TRUE}, returns a data.table keyed by the dimensions of the data.}
+
+\item{...}{ignored. Is there for convenience so that a call to \code{\link[=ReadNetCDF]{ReadNetCDF()}} can
+be also valid for \code{\link[=GlanceNetCDF]{GlanceNetCDF()}}.}
 }
 \value{
 The return format is specified by \code{out}. It can be a data table in which each
@@ -52,6 +55,7 @@ the dimensions specified in the NetCDF file and each element must be a vector
 whose range defines
 a contiguous subset of data. You don't need to provide and exact range that
 matches the actual gridpoints of the file; the closest gridpoint will be selected.
+Furthermore, you can use \code{NA} to refer to the existing minimum or maximum.
 
 So, if you want to get Southern Hemisphere data from the from a file that defines
 latitude as \code{lat}, then you can use:

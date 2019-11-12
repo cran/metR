@@ -10,6 +10,8 @@
 #' @param out character indicating the type of output desired
 #' @param subset a list of subsetting objects. See below.
 #' @param key if `TRUE`, returns a data.table keyed by the dimensions of the data.
+#' @param ... ignored. Is there for convenience so that a call to [ReadNetCDF()] can
+#' be also valid for [GlanceNetCDF()].
 #'
 #' @section Subsetting:
 #' In the most basic form, `subset` will be a named list whose names must match
@@ -17,6 +19,7 @@
 #' whose range defines
 #' a contiguous subset of data. You don't need to provide and exact range that
 #' matches the actual gridpoints of the file; the closest gridpoint will be selected.
+#' Furthermore, you can use `NA` to refer to the existing minimum or maximum.
 #'
 #' So, if you want to get Southern Hemisphere data from the from a file that defines
 #' latitude as `lat`, then you can use:
@@ -106,24 +109,15 @@ ReadNetCDF <- function(file, vars = NULL,
                        out = c("data.frame", "vector", "array"),
                        subset = NULL, key = FALSE) {
     ncdf4.available <- requireNamespace("ncdf4", quietly = TRUE)
-    udunits2.available <- requireNamespace("udunits2", quietly = TRUE)
-    if (!ncdf4.available & !udunits2.available) {
-        stop("ReadNetCDF needs packages 'ncdf4' and 'udunits2'. ",
-             "Install them with 'install.packages(c(\"ncdf4\", \"udunits2\"))'")
-    }
-
     if (!ncdf4.available) {
         stop("ReadNetCDF needs package'ncdf4'. ",
              "Install it with 'install.packages(\"ncdf4\")'")
     }
 
-    if (!udunits2.available) {
-        stop("ReadNetCDF needs package 'udunits2'. ",
-             "Install it with 'install.packages(\"udunits2\")'")
-    }
 
     out <- out[1]
     checks <- makeAssertCollection()
+    assertCharacter(file, len = 1, min.chars = 1, any.missing = FALSE, add = checks)
     assertAccess(file, "r", add = checks)
     assertCharacter(vars, null.ok = TRUE, any.missing = FALSE, unique = TRUE,
                     add = checks)
@@ -143,7 +137,6 @@ ReadNetCDF <- function(file, vars = NULL,
         # options(OutDec = dec)
         return(r)
     }
-
 
     dec <- getOption("OutDec")
     # Dejemos todo prolijo antes de salir.
@@ -178,12 +171,12 @@ ReadNetCDF <- function(file, vars = NULL,
     names(dims) <- ids
     has_timedate <- FALSE
     if ("time" %in% names(dimensions) && ncfile$dim$time$units != "") {
-        has_timedate <- TRUE
-        time <- udunits2::ud.convert(dimensions[["time"]],
-                                     ncfile$dim$time$units,
-                                     "seconds since 1970-01-01 00:00:00")
-        dimensions[["time"]] <- as.character(as.POSIXct(time, tz = "UTC",
-                                                        origin = "1970-01-01 00:00:00"))
+        time <- .parse_time(dimensions[["time"]],
+                            ncfile$dim$time$units)
+        dimensions[["time"]] <- as.character(time)
+        if (.is.somedate(time)) {
+            has_timedate <- TRUE
+        }
     }
 
     # if (out[1] == "vars") {
@@ -208,8 +201,8 @@ ReadNetCDF <- function(file, vars = NULL,
             stop('Multiple subsets only supported for `out = "data.frame"')
         }
         reads <- lapply(subset, function(this_subset) {
-                ReadNetCDF(file = file, vars = vars, out = out, key = key, subset = this_subset)
-            })
+            ReadNetCDF(file = file, vars = vars, out = out, key = key, subset = this_subset)
+        })
         return(data.table::rbindlist(reads))
     } else {
         subset <- subset[[1]]
@@ -222,7 +215,6 @@ ReadNetCDF <- function(file, vars = NULL,
     dim.length <- vector("numeric", length = length(vars))
 
     for (v in seq_along(vars)) {
-
         # Para cada variable, veo start y count
         order <- ncfile$var[[vars[v]]]$dimids
         start <- rep(1, length(order))
@@ -236,7 +228,15 @@ ReadNetCDF <- function(file, vars = NULL,
             d <- dimensions[[s]]
             sub <- subset[[s]]
 
-            if (.is.somedate(sub[1]) | s == "time") {
+            if (is.na(sub[1])) {
+                sub[1] <- min(d)
+            }
+
+            if (is.na(sub[2])) {
+                sub[2] <- max(d)
+            }
+
+            if (.is.somedate(sub) | s == "time") {
                 start[[s]] <- which(lubridate::as_datetime(d) %~% min(lubridate::as_datetime(sub)))
                 count[[s]] <- abs(which(lubridate::as_datetime(d) %~% max(lubridate::as_datetime(sub))) - start[[s]] + 1)
             } else {
@@ -294,6 +294,34 @@ ReadNetCDF <- function(file, vars = NULL,
     return(nc.df[])
 }
 
+.parse_time <- function(time, units) {
+    if (!requireNamespace("udunits2", quietly = TRUE)) {
+        message("Time dimension found and package udunits2 is not installed. Trying to parse.")
+        fail <- paste0("Time parsing failed. Returing raw values in ", units, ".\n",
+                       "Install udunits2 with `install_packages(\"udunits2\")` to parse it automatically.")
+
+        units <- trimws(strsplit(units, "since")[[1]])
+
+        period_fun <- try(match.fun(units[1]), silent = TRUE)
+        if (is.error(period_fun)) {
+            warning(fail)
+            return(time)
+        }
+
+        time_try <- try(as.POSIXct(units[2],  tz = "UTC", origin = "1970-01-01 00:00:00") +
+                            period_fun(time),
+                        silent = TRUE)
+        if (is.error(time_try)) {
+            warning(fail)
+            return(time)
+        }
+        return(time_try)
+    }
+
+    time <- udunits2::ud.convert(time, units,
+                                 "seconds since 1970-01-01 00:00:00")
+    as.POSIXct(time, tz = "UTC", origin = "1970-01-01 00:00:00")
+}
 
 .expand_chunks <- function(subset) {
     if (is.null(subset)) {
@@ -329,7 +357,11 @@ ReadNetCDF <- function(file, vars = NULL,
         if (is.list(x)) {
             lapply(x, to_range)
         } else {
-            range(x)
+            if (length(x) != 2) {
+                range(x)
+            } else {
+                x
+            }
         }
     }
 
@@ -349,7 +381,7 @@ ReadNetCDF <- function(file, vars = NULL,
 #' @rdname ReadNetCDF
 #'
 #' @export
-GlanceNetCDF <- function(file) {
+GlanceNetCDF <- function(file, ...) {
     ReadNetCDF(file, out = "vars")
 }
 
@@ -384,11 +416,13 @@ print.ncvar4 <- function(x, ...) {
 print.ncdim4 <- function(x, ...) {
     # cat("$", dim$name, "\n", sep = "")
     if (x$name == "time" & x$units != "") {
-        time <- udunits2::ud.convert(x$vals,
-                                     x$units,
-                                     "seconds since 1970-01-01 00:00:00")
-        vals <- as.POSIXct(time, tz = "UTC", origin = "1970-01-01 00:00:00")
-        units <- ""
+        vals <- suppressMessages(suppressWarnings(.parse_time(x$vals, x$units)))
+
+        if (.is.somedate(vals)) {
+            units <- ""
+        }
+
+
     } else {
         vals <- x$vals
         units <- x$units
