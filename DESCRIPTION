@@ -1,7 +1,8 @@
 Type: Package
 Package: metR
+Language: en-GB
 Title: Tools for Easier Analysis of Meteorological Fields
-Version: 0.5.0
+Version: 0.6.0
 Authors@R: 
     c(person(given = "Elio",
            family = "Campitelli",
@@ -16,20 +17,20 @@ License: GPL-3
 URL: https://github.com/eliocamp/metR
 BugReports: https://github.com/eliocamp/metR/issues
 Depends: R (>= 2.10)
-Imports: checkmate, curl, data.table, digest, dplyr, fields, Formula,
-        formula.tools, ggplot2 (>= 3.0.0), grid, gridExtra, gtable,
-        lubridate, maps, maptools, Matrix, memoise, plyr, RCurl,
+Imports: checkmate, data.table, digest, fields, Formula, formula.tools,
+        ggplot2 (>= 3.0.0), grid, gtable, lubridate, memoise, plyr,
         scales, sp, stringr, purrr
-Suggests: covr, irlba, knitr, ncdf4, pkgdown, reshape2, rmarkdown,
-        testthat, viridis, udunits2
+Suggests: maps, maptools, covr, irlba, knitr, ncdf4, pkgdown, reshape2,
+        rmarkdown, testthat (>= 2.1.0), viridis, udunits2, gridExtra,
+        vdiffr
 ByteCompile: yes
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2019-11-12 18:36:56 UTC; elio
+Packaged: 2020-02-10 15:32:11 UTC; elio
 Author: Elio Campitelli [cre, aut] (<https://orcid.org/0000-0002-7742-9230>)
 Maintainer: Elio Campitelli <elio.campitelli@cima.fcen.uba.ar>
 Repository: CRAN
-Date/Publication: 2019-11-13 00:10:02 UTC
+Date/Publication: 2020-02-10 16:30:02 UTC

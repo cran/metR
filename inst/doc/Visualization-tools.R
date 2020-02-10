@@ -1,11 +1,11 @@
-## ----setup, include = FALSE----------------------------------------------
+## ----setup, include = FALSE---------------------------------------------------
 knitr::opts_chunk$set(
 collapse = TRUE,
 message = FALSE,
 fig.width = 7,
 comment = "#>")
 
-## ---- message = FALSE----------------------------------------------------
+## ---- message = FALSE---------------------------------------------------------
 library(metR)
 library(ggplot2)
 library(data.table)
@@ -14,15 +14,15 @@ temperature[, air.z := Anomaly(air), by = .(lat, lev)]
 
 # Plot made with base ggplot
 (g <- ggplot(temperature[lon %~% 180], aes(lat, lev, z = air.z)) +
-        geom_contour(aes(color = ..level..)))
+        geom_contour2(aes(color = ..level..)))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 g + 
     scale_y_level() +
     scale_x_latitude(ticks = 15, limits = c(-90, 90)) +
     scale_color_divergent()
 
-## ---- fig.show='hold', fig.width = 3.3-----------------------------------
+## ---- fig.show='hold', fig.width = 3.3----------------------------------------
 breaks = seq(100, 200, by = 10)
 v <- setDT(reshape2::melt(volcano))
 ggplot(v, aes(Var1, Var2, z = value)) +
@@ -35,7 +35,7 @@ ggplot(v, aes(Var1, Var2, z = value)) +
     geom_contour_fill(breaks = breaks) +
     guides(fill = "none")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # Adding missing values
 v[, value.gap := value]
 v[(Var1 - 40)^2 + (Var2 - 35)^2 < 50, value.gap := NA]
@@ -44,14 +44,14 @@ ggplot(v, aes(Var1, Var2, z = value.gap)) +
     geom_contour_fill(breaks = breaks, na.fill = TRUE) +
     geom_point(data = v[is.na(value.gap)], size = 0.1, alpha = 0.3)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
     geom_contour_fill() +
     scale_fill_divergent() +
     scale_x_longitude() +
     scale_y_latitude()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
     geom_contour_fill() +
     geom_contour(color = "black") +
@@ -60,7 +60,7 @@ ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
     scale_x_longitude() +
     scale_y_latitude()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
     geom_contour_fill() +
     geom_contour2(color = "black") +
@@ -69,7 +69,7 @@ ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
     scale_x_longitude() +
     scale_y_latitude()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
      geom_contour_fill() +
      geom_contour_tanaka() +
@@ -77,7 +77,7 @@ ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
      scale_x_longitude() +
      scale_y_latitude()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 data(geopotential)    # geopotential height at 700hPa for the southern hemisphere. 
 
 ggplot(geopotential[, gh.base := gh[lon == 120 & lat == -50], by = date][
@@ -91,13 +91,13 @@ ggplot(geopotential[, gh.base := gh[lon == 120 & lat == -50], by = date][
     scale_x_longitude() +
     scale_y_latitude()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ggplot(v, aes(Var1, Var2, z = value.gap)) +
     geom_contour_fill(breaks = breaks, na.fill = TRUE) +
     stat_subset(aes(subset = is.na(value.gap)), geom = "raster", 
                 fill = "#EBEBEB")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 temperature[, c("t.dx", "t.dy") := Derivate(air.z ~ lon + lat,
                                             cyclical = c(TRUE, FALSE)), 
             by = lev]
@@ -110,16 +110,16 @@ temperature[, c("t.dx", "t.dy") := Derivate(air.z ~ lon + lat,
     scale_x_longitude() +
     scale_mag())
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 g + coord_polar()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ggplot(temperature[lon %between% c(100, 200) & lat == -50], aes(lon, lev)) + 
     geom_arrow(aes(dx = dx(t.dx, lat), dy = dy(t.dy)), skip = 1) +
     scale_y_level() +
     scale_mag()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 (g <- ggplot(temperature[lev == 500], aes(lon, lat)) +
      geom_contour_fill(aes(z = air.z)) +
      geom_streamline(aes(dx = t.dy, dy = -t.dx), L = 10, res = 2,   
@@ -127,10 +127,10 @@ ggplot(temperature[lon %between% c(100, 200) & lat == -50], aes(lon, lev)) +
      scale_y_latitude(limits = c(-90, 0)) +
      scale_x_longitude())
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 g + coord_polar()
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 500], aes(lon, lat)) +
     geom_streamline(aes(dx = t.dy, dy = -t.dx, size = ..step.., alpha = ..step..,
                         color = sqrt(..dx..^2 + ..dy..^2)), arrow = NULL,
@@ -141,7 +141,7 @@ ggplot(temperature[lev == 500], aes(lon, lat)) +
     scale_size(range = c(0, 1), guide = "none") +
     scale_alpha(guide = "none")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
     geom_contour2(aes(color = ..level..), breaks = MakeBreaks(2)) +
     scale_color_divergent(guide = "legend",
@@ -149,7 +149,7 @@ ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
     scale_x_longitude() +
     scale_y_latitude() + theme(legend.position = "bottom")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
     geom_contour_fill(breaks = MakeBreaks(2)) +
     scale_fill_divergent(guide = "colorstrip",
@@ -158,7 +158,7 @@ ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
     scale_y_latitude() + 
     theme(legend.position = "bottom")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 ggplot(v, aes(Var1, Var2)) +
     geom_relief(aes(z = value))
 
