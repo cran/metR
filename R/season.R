@@ -15,7 +15,7 @@
 #' season(1, lang = "en")
 #' season(as.Date("2017-01-01"))
 #'
-#' seasonaly(as.Date(c("2017-12-01", "2018-01-01", "2018-02-01")))
+#' seasonally(as.Date(c("2017-12-01", "2018-01-01", "2018-02-01")))
 #'
 #' is.full_season(as.Date(c("2017-12-01", "2018-01-01", "2018-02-01", "2018-03-01")))
 #'
@@ -55,7 +55,7 @@ season <- function(x, lang = c("en", "es")) {
 
 #' @export
 #' @rdname season
-seasonaly <- function(x) {
+seasonally <- function(x) {
     checks <- makeAssertCollection()
     assertVector(x, add = checks)
     assert(checkDateish(x))
@@ -73,7 +73,6 @@ seasonaly <- function(x) {
 
     times[match(x, times_org)]
 }
-
 
 #' @export
 #' @rdname season

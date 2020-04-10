@@ -4,7 +4,11 @@
 #' over using \code{\link[ncdf4]{ncvar_get}} is that the output is a tidy data.table
 #' with proper dimensions.
 #'
-#' @param file file to read from.
+#' @param file source to read from. Must be one of:
+#'    * A string representing a local file with read access.
+#'    * A string representing a URL readable by [ncdf4::nc_open()].
+#'      (this includes DAP urls).
+#'    * A netcdf object returned by [ncdf4::nc_open()].
 #' @param vars a character vector with the name of the variables to read. If
 #' \code{NULL}, then it read all the variables.
 #' @param out character indicating the type of output desired
@@ -89,17 +93,36 @@
 #' file with a nice printing method.
 #'
 #' @examples
-#' \dontrun{
-#' file <- "file.nc"
+#' file <- system.file("extdata", "temperature.nc", package = "metR")
 #' # Get a list of variables.
 #' variables <- GlanceNetCDF(file)
 #' print(variables)
+#'
+#' # The object returned by GlanceNetCDF is a list with lots
+#' # of information
+#' str(variables)
 #'
 #' # Read only the first one, with name "var".
 #' field <- ReadNetCDF(file, vars = c(var = names(variables$vars[1])))
 #' # Add a new variable.
 #' # ¡Make sure it's on the same exact grid!
-#' field[, var2 := ReadNerCDF(file2, out = "vector", subset = list(lat = 90:10))]
+#' field[, var2 := ReadNetCDF(file, out = "vector")]
+#'
+#' \dontrun{
+#' # Using a DAP url
+#' url <- "http://iridl.ldeo.columbia.edu/SOURCES/.Models/.SubX/.GMAO/.GEOS_V2p1/.hindcast/.ua/dods"
+#' field <- ReadNetCDF(url, subset = list(M = 1,
+#'                                        P = 10,
+#'                                        S = "1999-01-01"))
+#'
+#' # In this case, opening the netcdf file takes a non-neglible
+#' # amount of time. So if you want to iterate over many dimensions,
+#' # then it's more efficient to open the file first and then read it.
+#'
+#' ncfile <- ncdf4::nc_open(url)
+#' field <- ReadNetCDF(ncfile, subset = list(M = 1,
+#'                                        P = 10,
+#'                                        S = "1999-01-01"))
 #' }
 #'
 #' @export
@@ -114,11 +137,14 @@ ReadNetCDF <- function(file, vars = NULL,
              "Install it with 'install.packages(\"ncdf4\")'")
     }
 
-
     out <- out[1]
     checks <- makeAssertCollection()
-    assertCharacter(file, len = 1, min.chars = 1, any.missing = FALSE, add = checks)
-    assertAccess(file, "r", add = checks)
+
+    if (!inherits(file, "ncdf4")) {
+        assertCharacter(file, len = 1, min.chars = 1, any.missing = FALSE, add = checks)
+        assertURLFile(file, add = checks)
+    }
+
     assertCharacter(vars, null.ok = TRUE, any.missing = FALSE, unique = TRUE,
                     add = checks)
     assertChoice(out, c("data.frame", "vector", "array", "vars"), add = checks)
@@ -128,23 +154,22 @@ ReadNetCDF <- function(file, vars = NULL,
 
     reportAssertions(checks)
 
-    ncfile <- ncdf4::nc_open(file)
+    if (!inherits(file, "ncdf4")) {
+        ncfile <- ncdf4::nc_open(file)
+        on.exit({
+            ncdf4::nc_close(ncfile)
+        })
+    } else {
+       ncfile <- file
+    }
+
 
     if (out[1] == "vars") {
         r <- list(vars = ncfile$var,
                   dims = ncfile$dim)
         class(r) <- c("nc_glance", class(r))
-        # options(OutDec = dec)
         return(r)
     }
-
-    dec <- getOption("OutDec")
-    # Dejemos todo prolijo antes de salir.
-    options(OutDec = ".")
-    on.exit({
-        options(OutDec = dec)
-        ncdf4::nc_close(ncfile)
-    })
 
     if (is.null(vars)) {
         vars <- names(ncfile$var)
@@ -165,25 +190,15 @@ ReadNetCDF <- function(file, vars = NULL,
     ids <- vector()
     dimensions <- list()
     for (i in seq_along(dims)) {
-        dimensions[[dims[i]]] <- ncfile$dim[[dims[i]]]$vals
+        # if (dims[i] == "time" && ncfile$dim[[dims[i]]]$units != "") {
+            dimensions[[dims[i]]] <- .parse_time(ncfile$dim[[dims[i]]]$vals,
+                                                 ncfile$dim[[dims[i]]]$units)
+        # } else {
+        #     dimensions[[dims[i]]] <- ncfile$dim[[dims[i]]]$vals
+        # }
         ids[i] <- ncfile$dim[[i]]$id
     }
     names(dims) <- ids
-    has_timedate <- FALSE
-    if ("time" %in% names(dimensions) && ncfile$dim$time$units != "") {
-        time <- .parse_time(dimensions[["time"]],
-                            ncfile$dim$time$units)
-        dimensions[["time"]] <- as.character(time)
-        if (.is.somedate(time)) {
-            has_timedate <- TRUE
-        }
-    }
-
-    # if (out[1] == "vars") {
-    #     r <- list(vars = unname(vars), dimensions = dimensions, dims = dims)
-    #     # options(OutDec = dec)
-    #     return(r)
-    # }
 
     ## Hago los subsets
     # Me fijo si faltan dimensiones
@@ -228,6 +243,10 @@ ReadNetCDF <- function(file, vars = NULL,
             d <- dimensions[[s]]
             sub <- subset[[s]]
 
+            if (.is.somedate(d)) {
+                sub <- lubridate::as_datetime(sub)
+            }
+
             if (is.na(sub[1])) {
                 sub[1] <- min(d)
             }
@@ -236,15 +255,11 @@ ReadNetCDF <- function(file, vars = NULL,
                 sub[2] <- max(d)
             }
 
-            if (.is.somedate(sub) | s == "time") {
-                start[[s]] <- which(lubridate::as_datetime(d) %~% min(lubridate::as_datetime(sub)))
-                count[[s]] <- abs(which(lubridate::as_datetime(d) %~% max(lubridate::as_datetime(sub))) - start[[s]] + 1)
-            } else {
-                start1 <- which(d %~% sub[1])
-                end <- which(d %~% sub[length(sub)])
-                start[[s]] <- min(start1, end)
-                count[[s]] <- abs(end - start1) + 1
-            }
+            start1 <- which(d %~% sub[1])
+            end <- which(d %~% sub[length(sub)])
+            start[[s]] <- min(start1, end)
+            count[[s]] <- abs(end - start1) + 1
+
 
             if(count[[s]] == 0) count[[s]] <- 1
 
@@ -274,17 +289,11 @@ ReadNetCDF <- function(file, vars = NULL,
         nc.df <- .melt_array(nc[[first.var]], dims = nc_dim[[first.var]],
                              value.name = names(vars)[first.var])
 
-        if ("time" %in% names(dimensions) && has_timedate) {
-            nc.df[, time2 := lubridate::as_datetime(time[1]), by = time]
-            nc.df[, time := NULL]
-            data.table::setnames(nc.df, "time2", "time")
-        }
-
         for (v in seq_along(vars)[-first.var]) {
             this.dim <- names(dimnames(nc[[v]]))
             first.dim <- names(dimnames(nc[[first.var]]))
             missing.dim <- first.dim[!(first.dim %in% this.dim)]
-            ..n <- c(nc[[v]])
+            n <- c(nc[[v]])
             nc.df[, names(vars)[v] := ..n, by = c(missing.dim)]
         }
 
@@ -292,10 +301,15 @@ ReadNetCDF <- function(file, vars = NULL,
     }
 
 
-    return(nc.df[])
+    return(nc.df[][])
 }
 
 .parse_time <- function(time, units) {
+    has_since <- grepl("since", units)
+    if (!has_since) {
+        return(time)
+    }
+
     if (!requireNamespace("udunits2", quietly = TRUE)) {
         message("Time dimension found and package udunits2 is not installed. Trying to parse.")
         fail <- paste0("Time parsing failed. Returing raw values in ", units, ".\n",
@@ -419,17 +433,11 @@ print.ncvar4 <- function(x, ...) {
 #' @export
 print.ncdim4 <- function(x, ...) {
     # cat("$", dim$name, "\n", sep = "")
-    if (x$name == "time" & x$units != "") {
-        vals <- suppressMessages(suppressWarnings(.parse_time(x$vals, x$units)))
+    units <- x$units
+    vals <- suppressMessages(suppressWarnings(.parse_time(x$vals, x$units)))
 
-        if (.is.somedate(vals)) {
-            units <- ""
-        }
-
-
-    } else {
-        vals <- x$vals
-        units <- x$units
+    if (.is.somedate(vals)) {
+        units <- ""
     }
 
     cat("  ", x$name, ": ",
@@ -442,7 +450,7 @@ print.ncdim4 <- function(x, ...) {
 
 
 .melt_array <- function(array, dims, value.name = "V1") {
-    dims <- lapply(dims, c)
+    # dims <- lapply(dims, c)
     dims <- c(dims[length(dims):1], sorted = FALSE)
     grid <- do.call(data.table::CJ, dims)
     grid[, c(value.name) := c(array)][]

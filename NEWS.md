@@ -1,3 +1,26 @@
+# metR 0.7.0
+
+## New features
+
+- `FitWave()` and related functions return `NA`s when the inputted signal has `NA`s.
+
+- `FitLm()` accepts a `weights` argument to perform weighted regression.
+
+- `ReadNetCDF()` now can read files directly from DAP servers and other urls, and 
+  objects returned by [ncdf4::nc_open()].
+
+## Bugfixes
+
+- `ReadNetCDF()` won't try to parse "time" dimensions that are not dates and will try 
+to parse as time all dimensions.
+
+
+## Breaking changes
+ 
+- `seasonaly()` is now correctly called `seasonally()`. This proves that you don't 
+put an ESL person in charge of naming stuff.
+
+
 # metR 0.6.0 - Pileus
 
 ## New features
@@ -7,7 +30,7 @@
 - `geom_arrow()` and `geom_vector()` should plot faster. 
 
 - New functions `is.full_season()` and `seasonaly()`. 
-
+    
 - `FitLm()` returns model $r^2$ and adjusted $r^2$.
 
 - `FitLm()` adds names to unnamed terms. 

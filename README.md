@@ -27,7 +27,7 @@ such as `Derivate()` or `EOF()`; these are implemented to work in the
 [data.table](https://github.com/Rdatatable/data.table/wiki) paradigm,
 but also work with regular data frames.
 
-Currently metR is in developement but maturing. Most functions check
+Currently metR is in development but maturing. Most functions check
 arguments and there are some tests. However, some functions might change
 it’s interface, and functionality can be moved to other packages, so
 please bear that in mind.
@@ -40,11 +40,13 @@ You can install metR from CRAN with:
 install.packages("metR")
 ```
 
-Or the developement version with:
+Or the developement version ([![Build
+Status](https://travis-ci.org/eliocamp/metR.svg?branch=dev)](https://travis-ci.org/eliocamp/metR))
+with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("eliocamp/metR")
+devtools::install_github("eliocamp/metR@dev")
 ```
 
 If you need to read netcdf files, you might need to install the netcdf
