@@ -21,7 +21,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' topo <- GetTopography(280, 330, 0, -60, resolution = 0.5, verbose = FALSE)
+#' topo <- GetTopography(280, 330, 0, -60, resolution = 0.5)
 #' library(ggplot2)
 #' ggplot(topo, aes(lon, lat)) +
 #'     geom_raster(aes(fill = h)) +
@@ -33,7 +33,6 @@
 #' Source: Amante, C. and B.W. Eakins, 2009. ETOPO1 1 Arc-Minute Global Relief Model: Procedures, Data Sources and Analysis. NOAA Technical Memorandum NESDIS NGDC-24. National Geophysical Data Center, NOAA. doi:10.7289/V5C8276M
 #'
 #' @export
-#' @import data.table
 GetTopography <- function(lon.west, lon.east, lat.north, lat.south, resolution = 3.5,
                           cache = TRUE, file.dir = tempdir(), verbose = interactive()) {
     checks <- makeAssertCollection()
@@ -78,17 +77,22 @@ GetTopography <- function(lon.west, lon.east, lat.north, lat.south, resolution =
 
             files <- list.files(file.dir, full.names = TRUE)
         }
-        if (file %in% files & cache == TRUE) {
+        if (cache == TRUE && file %in% files) {
             if (verbose == TRUE) message("Fetching cached field.")
             field <- data.table::fread(file)[, -1]
         } else {
             # Get data
             url <- .BuildETOPORequest(lon.west, lon.east, lat.north, lat.south,
                                       resolution[1], resolution[2])
-            field <- try(data.table::fread(url, col.names = c("lon", "lat", "h"),
-                                           showProgress = verbose))
+            temp_file <- tempfile(fileext = ".tif")
+            field <- try(utils::download.file(url, temp_file, quiet = TRUE), silent = TRUE)
 
             if (is.error(field)) stop("Failed to fetch file.")
+
+            check_packages(c("raster", "rgdal"), "GetTopography")
+
+            field <- data.table::as.data.table(raster::rasterToPoints(raster::raster(temp_file)))
+            colnames(field) <- c("lon", "lat", "h")
 
         }
         field[, lon := ConvertLongitude(lon, from = 180)]
@@ -98,9 +102,16 @@ GetTopography <- function(lon.west, lon.east, lat.north, lat.south, resolution =
 }
 
 .BuildETOPORequest <- function(lon.west, lon.east, lat.north, lat.south, resx, resy) {
+    width <- (lon.east - lon.west )/resx
+    height <- (lat.north - lat.south)/resy
     bbox <- paste(lon.west, lat.south, lon.east, lat.north, sep = "," )
-    url <- paste0("https://gis.ngdc.noaa.gov/cgi-bin/public/wcs/etopo1.xyz?",
-                  "filename=etopo1.xyz&request=getcoverage&version=1.0.0",
-                  "&service=wcs&coverage=etopo1&CRS=EPSG:4326&format=xyz",
-                  "&resx=", resx, "&resy=", resy, "&bbox=", bbox)
+
+    url <- paste0(
+    "https://gis.ngdc.noaa.gov/arcgis/rest/services/DEM_mosaics/ETOPO1_ice_surface/ImageServer/exportImage",
+    "?bbox=", bbox,
+    "&bboxSR=4326",
+    "&size=", paste(width, height, sep = ","),
+    "&imageSR=4326&format=tiff&pixelType=S16&interpolation=+RSP_NearestNeighbor&compression=LZW&f=image")
+
+    url
 }

@@ -55,18 +55,15 @@
 #'
 #' @family ggplot2 helpers
 #' @export
-#' @import ggplot2
 geom_contour_fill <- function(mapping = NULL, data = NULL,
                          stat = "ContourFill", position = "identity",
                          ...,
                          breaks = MakeBreaks(),
                          bins = NULL,
                          binwidth = NULL,
-                         # na.rm = FALSE,
+                         kriging = FALSE,
+                         global.breaks = TRUE,
                          na.fill = FALSE,
-                         # fill.linear = TRUE,
-                         # xwrap = NULL,
-                         # ywrap = NULL,
                          show.legend = NA,
                          inherit.aes = TRUE) {
     .check_wrap_param(list(...))
@@ -74,7 +71,7 @@ geom_contour_fill <- function(mapping = NULL, data = NULL,
         data = data,
         mapping = mapping,
         stat = stat,
-        geom = GeomPolygon,
+        geom = ggplot2::GeomPolygon,
         position = position,
         show.legend = show.legend,
         inherit.aes = inherit.aes,
@@ -84,9 +81,8 @@ geom_contour_fill <- function(mapping = NULL, data = NULL,
             binwidth = binwidth,
             na.rm = FALSE,
             na.fill = na.fill,
-            # fill.linear = fill.linear,
-            # xwrap = xwrap,
-            # ywrap = ywrap,
+            kriging = kriging,
+            global.breaks = global.breaks,
             ...
         )
     )

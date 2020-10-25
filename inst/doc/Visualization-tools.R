@@ -1,5 +1,6 @@
 ## ----setup, include = FALSE---------------------------------------------------
 knitr::opts_chunk$set(
+  dev = "jpeg",
 collapse = TRUE,
 message = FALSE,
 fig.width = 7,
@@ -22,34 +23,53 @@ g +
     scale_x_latitude(ticks = 15, limits = c(-90, 90)) +
     scale_color_divergent()
 
-## ---- fig.show='hold', fig.width = 3.3----------------------------------------
-breaks = seq(100, 200, by = 10)
-v <- setDT(reshape2::melt(volcano))
-ggplot(v, aes(Var1, Var2, z = value)) +
-    stat_contour(aes(fill = ..level..), geom = "polygon", breaks = breaks) +
-    geom_contour(color = "red", size = 0.2, breaks = 150) +
-    geom_contour(color = "blue", size = 0.2, breaks = 160) +
-    guides(fill = "none")
-
-ggplot(v, aes(Var1, Var2, z = value)) +
-    geom_contour_fill(breaks = breaks) +
-    guides(fill = "none")
+## -----------------------------------------------------------------------------
+ggplot(temperature[lon %~% 180], aes(lat, lev, z = air.z)) +
+  geom_contour_fill(breaks = MakeBreaks(binwidth = 2, exclude = 0)) +
+  scale_fill_divergent(breaks = MakeBreaks(binwidth = 2, exclude = 0))
 
 ## -----------------------------------------------------------------------------
-# Adding missing values
-v[, value.gap := value]
-v[(Var1 - 40)^2 + (Var2 - 35)^2 < 50, value.gap := NA]
+data(volcano)
+volcano <- setDT(reshape2::melt(volcano))
+volcano[, value.gap := value]
+volcano[(Var1 - 40)^2 + (Var2 - 35)^2 < 50, value.gap := NA]
 
-ggplot(v, aes(Var1, Var2, z = value.gap)) +
-    geom_contour_fill(breaks = breaks, na.fill = TRUE) +
-    geom_point(data = v[is.na(value.gap)], size = 0.1, alpha = 0.3)
+ggplot(volcano, aes(Var1, Var2, z = value.gap)) +
+    geom_contour_fill() 
 
 ## -----------------------------------------------------------------------------
-ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
-    geom_contour_fill() +
-    scale_fill_divergent() +
-    scale_x_longitude() +
-    scale_y_latitude()
+ggplot(volcano, aes(Var1, Var2, z = value.gap)) +
+    geom_contour_fill(na.fill = TRUE) 
+
+## -----------------------------------------------------------------------------
+ggplot(surface, aes(lon, lat)) +
+  geom_point(aes(color = height))
+
+ggplot(surface, aes(x, y)) +
+  geom_point(aes(color = height))
+
+## -----------------------------------------------------------------------------
+proj_string <- "+proj=lcc +lat_1=-30.9659996032715 +lat_2=-30.9659996032715 +lat_0=-30.9660034179688 +lon_0=-63.5670013427734 +a=6370000 +b=6370000"
+
+ggplot(surface, aes(x, y)) +
+  geom_contour_fill(aes(z = height))
+
+ggplot(surface, aes(x, y)) +
+  geom_contour_fill(aes(z = height), proj = proj_string)
+
+## -----------------------------------------------------------------------------
+set.seed(42)
+
+some_volcano <- volcano[sample(.N, .N/7)]   # select 70% of the points
+some_volcano[, Var1 := Var1 + rnorm(.N)]    # add some random noise
+some_volcano[, Var2 := Var2 + rnorm(.N)]
+
+ggplot(some_volcano, aes(Var1, Var2)) +
+  geom_point(aes(color = value))
+
+ggplot(some_volcano, aes(Var1, Var2)) +
+  geom_contour_fill(aes(z = value), kriging = TRUE) +
+  geom_point(size = 0.2)
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
@@ -71,6 +91,31 @@ ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
+    geom_contour_fill() +
+    geom_contour2(color = "black") +
+    geom_text_contour(stroke = 0.2, label.placement = label_placement_random()) +
+    scale_fill_divergent() +
+    scale_x_longitude() +
+    scale_y_latitude()
+
+## -----------------------------------------------------------------------------
+ggplot(temperature[lev %in% c(1000, 300)], aes(lon, lat, z = air.z)) +
+  geom_contour_fill() +
+  scale_fill_divergent() +
+  scale_x_longitude() +
+  scale_y_latitude() +
+  facet_grid(~lev)
+
+## -----------------------------------------------------------------------------
+ggplot(temperature[lev %in% c(1000, 300)], aes(lon, lat, z = air.z)) +
+  geom_contour_fill(global.breaks = FALSE) +
+  scale_fill_divergent() +
+  scale_x_longitude() +
+  scale_y_latitude() +
+  facet_grid(~lev)
+
+## -----------------------------------------------------------------------------
+ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
      geom_contour_fill() +
      geom_contour_tanaka() +
      scale_fill_divergent() +
@@ -78,7 +123,7 @@ ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
      scale_y_latitude()
 
 ## -----------------------------------------------------------------------------
-data(geopotential)    # geopotential height at 700hPa for the southern hemisphere. 
+data(geopotential)    # geopotential height at 700hPa for the Southern Hemisphere. 
 
 ggplot(geopotential[, gh.base := gh[lon == 120 & lat == -50], by = date][
     , .(correlation = cor(gh.base, gh)), 
@@ -92,10 +137,10 @@ ggplot(geopotential[, gh.base := gh[lon == 120 & lat == -50], by = date][
     scale_y_latitude()
 
 ## -----------------------------------------------------------------------------
-ggplot(v, aes(Var1, Var2, z = value.gap)) +
-    geom_contour_fill(breaks = breaks, na.fill = TRUE) +
+ggplot(volcano, aes(Var1, Var2, z = value.gap)) +
+    geom_contour_fill(na.fill = TRUE) +
     stat_subset(aes(subset = is.na(value.gap)), geom = "raster", 
-                fill = "#EBEBEB")
+                fill = "#a56de2")
 
 ## -----------------------------------------------------------------------------
 temperature[, c("t.dx", "t.dy") := Derivate(air.z ~ lon + lat,
@@ -137,7 +182,7 @@ ggplot(temperature[lev == 500], aes(lon, lat)) +
                     L = 10, res = 2, xwrap = c(0, 360), lineend = "round") + 
     scale_y_latitude(limits = c(-90, 0)) +
     scale_x_longitude() +
-    viridis::scale_color_viridis(guide = "none") +
+    scale_color_viridis_c(guide = "none") +
     scale_size(range = c(0, 1), guide = "none") +
     scale_alpha(guide = "none")
 
@@ -159,6 +204,6 @@ ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
     theme(legend.position = "bottom")
 
 ## -----------------------------------------------------------------------------
-ggplot(v, aes(Var1, Var2)) +
+ggplot(volcano, aes(Var1, Var2)) +
     geom_relief(aes(z = value))
 

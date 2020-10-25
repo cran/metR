@@ -6,9 +6,10 @@
 #'   and returns breaks as output
 #' @param bins Number of evenly spaced breaks.
 #' @param binwidth Distance between breaks.
-  #' @param global.breaks Logical indicating whether `breaks` should be computed for the whole
+#' @param global.breaks Logical indicating whether `breaks` should be computed for the whole
 #' data or for each grouping.
-# #' @param xwrap,ywrap vector of length two used to wrap the circular dimension
+#' @param kriging Logical indicating whether to perform ordinary kriging before contouring.
+#' Use this if you want to use contours with irregularly spaced data.
 #'
 #' @export
 #' @section Computed variables:
@@ -23,6 +24,7 @@ stat_contour2 <- function(mapping = NULL, data = NULL,
                           breaks = MakeBreaks(),
                           bins = NULL,
                           binwidth = NULL,
+                          kriging = FALSE,
                           global.breaks = TRUE,
                           na.rm = FALSE,
                           na.fill = FALSE,
@@ -44,6 +46,7 @@ stat_contour2 <- function(mapping = NULL, data = NULL,
             bins = bins,
             binwidth = binwidth,
             global.breaks = global.breaks,
+            kriging = kriging,
             ...
         )
     )
@@ -89,55 +92,89 @@ StatContour2 <- ggplot2::ggproto("StatContour2", ggplot2::Stat,
   compute_group = function(data, scales, bins = NULL, binwidth = NULL,
                            breaks = scales::fullseq, complete = TRUE,
                            na.rm = FALSE, circular = NULL, xwrap = NULL,
-                           ywrap = NULL, na.fill = FALSE, global.breaks = TRUE) {
+                           ywrap = NULL, na.fill = FALSE, global.breaks = TRUE,
+                           proj = NULL, kriging = FALSE) {
     if (isFALSE(global.breaks)) {
       breaks <- setup_breaks(data,
-                   breaks = breaks,
-                   bins = bins,
-                   binwidth = binwidth)
+                             breaks = breaks,
+                             bins = bins,
+                             binwidth = binwidth)
     }
 
-      setDT(data)
+    data.table::setDT(data)
 
-      data <- data[!(is.na(y) | is.na(x)), ]
+    data <- data[!(is.na(y) | is.na(x)), ]
 
-      if (isFALSE(na.fill)) {
-          data <- data[!is.na(z), ]
+    if (isFALSE(na.fill)) {
+      data <- data[!is.na(z), ]
+    }
+
+
+    nx <- data[, data.table::uniqueN(x), by = y]$V1
+    ny <- data[, data.table::uniqueN(y), by = x]$V1
+
+    complete.grid <- abs(max(nx) - min(nx)) == 0 & abs(max(ny) - min(ny)) == 0
+
+    if (complete.grid == FALSE) {
+      if (complete == FALSE) {
+        warning("data must be a complete regular grid", call. = FALSE)
+        return(data.frame())
+      } else {
+        # data <- setDT(tidyr::complete(data, x, y, fill = list(z = NA)))
+        data <- .complete(data, x, y)
+      }
+    }
+
+    data <- .impute_data.m(data, na.fill)
+
+
+    if (kriging) {
+      check_packages("kriging", "kriging")
+
+      pixels <- 40
+      data <- try(with(data, setNames(kriging::kriging(x, y, z, pixels = pixels)$map,
+                                      c("x", "y", "z"))), silent = TRUE)
+      if (inherits(data, "try-error")) {
+        warning("kriging failed. Perhaps the number of points is too small.")
+        return(data.frame())
       }
 
-      nx <- data[, uniqueN(x), by = y]$V1
-      ny <- data[, uniqueN(y), by = x]$V1
+      data.table::setDT(data)
+    }
 
-      complete.grid <- abs(max(nx) - min(nx)) == 0 & abs(max(ny) - min(ny)) == 0
+    if (!is.null(xwrap)) {
+      data <- suppressWarnings(WrapCircular(data, "x", xwrap))
+    }
+    if (!is.null(ywrap)) {
+      data <- suppressWarnings(WrapCircular(data, "y", ywrap))
+    }
 
-      if (complete.grid == FALSE) {
-          if (complete == FALSE) {
-              warning("data must be a complete regular grid", call. = FALSE)
-              return(data.frame())
-          } else {
-              # data <- setDT(tidyr::complete(data, x, y, fill = list(z = NA)))
-              data <- .complete(data, x, y)
+
+    data.table::setDF(data)
+    contours <- data.table::as.data.table(.contour_lines(data, breaks, complete = complete))
+
+    if (length(contours) == 0) {
+      warning("Not possible to generate contour data", call. = FALSE)
+      return(data.frame())
+    }
+    contours <- .order_contour.m(contours, data.table::setDT(data))
+
+    if (!is.null(proj)) {
+      if (is.function(proj)) {
+        contours <- proj(contours)
+      } else {
+        if (is.character(proj)) {
+          if (!requireNamespace("proj4", quietly = TRUE)) {
+            stop("Projection requires the proj4 package. Install it with `install.packages(\"proj4\")`")
           }
-      }
+          contours <- data.table::copy(contours)[, c("x", "y") := proj4::project(list(x, y), proj,
+                                                                                 inverse = TRUE)][]
 
-      data <- .impute_data.m(data, na.fill)
-
-      if (!is.null(xwrap)) {
-          data <- suppressWarnings(WrapCircular(data, "x", xwrap))
+        }
       }
-      if (!is.null(ywrap)) {
-          data <- suppressWarnings(WrapCircular(data, "y", ywrap))
-      }
-      setDF(data)
-      contours <- as.data.table(.contour_lines(data, breaks, complete = complete))
+    }
 
-      if (length(contours) == 0) {
-          warning("Not possible to generate contour data", call. = FALSE)
-          return(data.frame())
-      }
-      contours <- .order_contour.m(contours, setDT(data))
-
-      return(contours)
+    return(contours)
   }
 )
 
@@ -151,8 +188,8 @@ StatContour2 <- ggplot2::ggproto("StatContour2", ggplot2::Stat,
 }
 
 .order_contour <- function(contours, data) {
-    data <- copy(data)
-    contours <- copy(contours)
+    data <- data.table::copy(data)
+    contours <- data.table::copy(contours)
     x.data <- unique(data$x)
     x.data <- x.data[order(x.data)]
     x.N <- length(x.data)
@@ -214,40 +251,51 @@ StatContour2 <- ggplot2::ggproto("StatContour2", ggplot2::Stat,
     x[order(abs(tmp))][2]
 }
 
-.contour_lines <- memoise::memoise(function(data, breaks, complete = FALSE) {
-    z <- tapply(data$z, data[c("x", "y")], identity)
+# from ggplot2
+isoband_z_matrix <- function(data) {
+  # Convert vector of data to raster
+  x_pos <- as.integer(factor(data$x, levels = sort(unique(data$x))))
+  y_pos <- as.integer(factor(data$y, levels = sort(unique(data$y))))
 
-    if (is.list(z)) {
-        stop("Contour requires single `z` at each combination of `x` and `y`.",
-             call. = FALSE)
-    }
+  nrow <- max(y_pos)
+  ncol <- max(x_pos)
 
-    cl <- grDevices::contourLines(
-        x = sort(unique(data$x)), y = sort(unique(data$y)), z = z,
-        levels = breaks)
+  raster <- matrix(NA_real_, nrow = nrow, ncol = ncol)
+  raster[cbind(y_pos, x_pos)] <- data$z
 
-    if (length(cl) == 0) {
-        warning("Not possible to generate contour data", call. = FALSE)
-        return(data.frame())
+  raster
+}
+
+.contour_lines <- function(data, breaks, complete = FALSE) {
+  z <- isoband_z_matrix(data)
+
+  if (is.list(z)) {
+    stop("Contour requires single `z` at each combination of `x` and `y`.",
+         call. = FALSE)
+  }
+
+  cl <- isoband::isolines(x = sort(unique(data$x)),
+                          y = sort(unique(data$y)),
+                          z = z,
+                          levels = breaks)
+
+
+  if (length(cl) == 0) {
+    warning("Not possible to generate contour data", call. = FALSE)
+    return(data.frame())
   }
 
   # Convert list of lists into single data frame
-  lengths <- vapply(cl, function(x) length(x$x), integer(1))
-  levels <- vapply(cl, "[[", "level", FUN.VALUE = double(1))
-  xs <- unlist(lapply(cl, "[[", "x"), use.names = FALSE)
-  ys <- unlist(lapply(cl, "[[", "y"), use.names = FALSE)
-  pieces <- rep(seq_along(cl), lengths)
-  # Add leading zeros so that groups can be properly sorted later
-  groups <- paste(data$group[1], sprintf("%03d", pieces), sep = "-")
 
-  data.frame(
-    level = rep(levels, lengths),
-    x = xs,
-    y = ys,
-    piece = pieces,
-    group = groups
-  )
-})
+  cont <- data.table::rbindlist(lapply(cl, data.table::as.data.table), idcol = "level")
+
+  cont[, level := as.numeric(level)]
+  cont[, piece := as.numeric(factor(level))]
+  cont[, group := factor(paste(data$group[1], sprintf("%03d", piece),  sprintf("%03d", id), sep = "-"))]
+
+  cont[, .(level, x, y, piece, group)]
+
+}
 
 
 setup_breaks <- function(data, breaks, bins, binwidth) {

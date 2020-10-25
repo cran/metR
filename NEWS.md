@@ -1,3 +1,46 @@
+# metR 0.8.0
+
+## New features
+
+- `geom_text_contour()` placement of labels is completely redesigned. It gains an
+argument `label.placement` which takes a function that is in charge of positioning 
+the labels. See `label_placement_flattest()` for more details on the possible 
+placement methods and how to build your own. The default method is `label_placement_flattest`, 
+which places the label where the product of the curvature and the angle of the
+contour is minimised. This aims to put labels in a straight segment that is also 
+as horizontal as possible. If more than one point satisfy this condition, then
+it chooses the closest to the midpoint. This is a **breaking change**, as it 
+will change the label position of previous plots. 
+
+- The contour functions also gain a `proj` argument. It can be a proj4 string 
+to project the contours of or an arbitrary function to alter the contours 
+after they are computed. This now makes it possible to compute contours for data
+that is on a regular grid on projected coordinates but want to plot in lon-lat 
+coordinates (or vice versa). Bear in mind that contours that cross the dateline 
+will probably end up mangled.  
+
+- Contour functions also gain a `kriging` argument. If `TRUE`, will perform 
+ordinary kriging to interpolate irregularly placed data into a regular grid. 
+
+
+## Bugfixes
+
+- `FitLm()` handles `NA`s better.
+
+- `GetSMNData` returns the `date` parameter with the correct time zone.
+
+- `WaveFlux()` now only returns the value of the horizontal fluxes. That is, it will
+not return lon and lat. **This is a potentially breaking change**.
+
+- The contour family of functions now use `isoband` to compute contours (thanks to
+@clauswilke for the awesome package) instead of my ugly hack/workaround. As a result, 
+contours are faster and much more reliable. 
+
+- `EOF()` will now work even if {irlba} is not installed.
+
+- `GetTopography()` is now updated to the new ETOPO server. It now requires
+{raster} to work. 
+
 # metR 0.7.0
 
 ## New features
@@ -234,7 +277,7 @@ functionality in `Derivate()`
 - New `geom_text_contour()` and `geom_label_contour()` for labelling contours. 
 - New function `GeostrophicWind()`.
 - Fixed? weird bug with `ReadNetCDF()` and `as.POSIXct`.
-- `ReadNetCDF()` now supports timezones via de `udunits2` package.
+- `ReadNetCDF()` now supports time-zones via de `udunits2` package.
 - Fixed bad polygon ordering and extra polygon in `stat_contour_fill()`.
 - New functions `MakeBreaks()` and `AnchorBreaks()`.
 - New guide. `guide_colorstrip()` displays discretized values of a continuous colour 

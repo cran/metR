@@ -48,10 +48,10 @@
 #' part of the `formula`, respectively.
 #'
 #' It is much faster to compute only some singular vectors, so is advisable not
-#' to set n to \code{NULL}. If the irba package is installed, EOF uses
+#' to set n to \code{NULL}. If the irlba package is installed, EOF uses
 #' [irlba::irlba] instead of [base::svd] since it's much faster.
 #'
-#' The bootsrapping procedure follows Fisher et.al. (2016) and returns the
+#' The bootstrapping procedure follows Fisher et.al. (2016) and returns the
 #' standard deviation of each singular value.
 #'
 #' @examples
@@ -102,7 +102,6 @@
 #' Fisher, A., Caffo, B., Schwartz, B., & Zipunnikov, V. (2016). Fast, Exact Bootstrap Principal Component Analysis for p > 1 million. Journal of the American Statistical Association, 111(514), 846–860. http://doi.org/10.1080/01621459.2015.1062383
 #' @family meteorology functions
 #' @export
-#' @import data.table
 EOF <- function(formula, n = 1, data = NULL, B = 0,
                 probs = c(lower = 0.025, mid = 0.5, upper = 0.975),
                 rotate = FALSE, suffix = "PC", fill = NULL) {
@@ -140,7 +139,7 @@ EOF <- function(formula, n = 1, data = NULL, B = 0,
 
     if (is.null(data)) {
         formula <- Formula::as.Formula(formula)
-        data <- as.data.table(eval(quote(model.frame(formula, data  = data))))
+        data <- data.table::as.data.table(eval(quote(model.frame(formula, data  = data))))
     } else {
         # Check if columns are indata
         all.cols <- c(value.var, row.vars, col.vars)
@@ -214,7 +213,7 @@ EOF <- function(formula, n = 1, data = NULL, B = 0,
     if (B > 1) {
         set.seed(42)
         if (!tall) {
-            names(eof) <- c("d", "v", "u", "iter", "mprod")
+            names(eof)[1:3] <- c("d", "v", "u")
         }
         loadings <- with(eof, diag(d, ncol = max(n), nrow = max(n))%*%t(v))
         p <- nrow(eof$v)

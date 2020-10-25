@@ -11,6 +11,9 @@ Status](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.t
 status](https://codecov.io/gh/eliocamp/metR/branch/master/graph/badge.svg)](https://codecov.io/github/eliocamp/metR/?branch=master)
 [![CRAN
 status](http://www.r-pkg.org/badges/version/metR)](https://cran.r-project.org/package=metR)
+[![DOI](https://zenodo.org/badge/96357263.svg)](https://zenodo.org/badge/latestdoi/96357263)
+[![R build
+status](https://github.com/eliocamp/metR/workflows/R-CMD-check/badge.svg)](https://github.com/eliocamp/metR/actions)
 
 metR packages several functions and utilities that make R better for
 handling meteorological data in the tidy data paradigm. It started
@@ -20,7 +23,7 @@ it has grown organically and for my own needs and feedback from users.
 
 Conceptually it’s divided into *visualization tools* and *data tools*.
 The former are geoms, stats and scales that help with plotting using
-[ggplot2](http://ggplot2.tidyverse.org/index.html), such as
+[ggplot2](https://ggplot2.tidyverse.org/index.html), such as
 `stat_contour_fill()` or `scale_y_level()`, while the later are
 functions for common data processing tools in the atmospheric sciences,
 such as `Derivate()` or `EOF()`; these are implemented to work in the
@@ -40,7 +43,7 @@ You can install metR from CRAN with:
 install.packages("metR")
 ```
 
-Or the developement version ([![Build
+Or the development version ([![Build
 Status](https://travis-ci.org/eliocamp/metR.svg?branch=dev)](https://travis-ci.org/eliocamp/metR))
 with:
 

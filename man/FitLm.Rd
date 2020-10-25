@@ -4,7 +4,7 @@
 \alias{FitLm}
 \title{Fast estimates of linear regression}
 \usage{
-FitLm(y, ..., weights = rep(1, length(y)), se = FALSE)
+FitLm(y, ..., weights = rep(1, length(y)), se = FALSE, r2 = se)
 }
 \arguments{
 \item{y}{numeric vector of observations to model}
@@ -14,6 +14,8 @@ FitLm(y, ..., weights = rep(1, length(y)), se = FALSE)
 \item{weights}{numerical vector of weights (which doesn't need to be normalised)}
 
 \item{se}{logical indicating whether to compute the standard error}
+
+\item{r2}{logical indicating whether to compute r squared}
 }
 \value{
 a list with elements
@@ -30,7 +32,7 @@ If there's no complete cases in the regression, \code{NA}s are returned with no
 warning.
 }
 \description{
-Computes a linear regression with \link[stats:.lm.fit]{stats::.lm.fit} and returns the estimate
+Computes a linear regression with \link[stats:lmfit]{stats::.lm.fit} and returns the estimate
 and, optionally, standard error for each regressor.
 }
 \examples{

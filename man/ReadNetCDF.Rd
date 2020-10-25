@@ -25,7 +25,7 @@ GlanceNetCDF(file, ...)
 }}
 
 \item{vars}{a character vector with the name of the variables to read. If
-\code{NULL}, then it read all the variables.}
+\code{NULL}, then it reads all the variables.}
 
 \item{out}{character indicating the type of output desired}
 
@@ -33,7 +33,7 @@ GlanceNetCDF(file, ...)
 
 \item{key}{if \code{TRUE}, returns a data.table keyed by the dimensions of the data.}
 
-\item{...}{ignored. Is there for convenience so that a call to \code{\link[=ReadNetCDF]{ReadNetCDF()}} can
+\item{...}{in \code{\link[=GlanceNetCDF]{GlanceNetCDF()}}, ignored. Is there for convenience so that a call to \code{\link[=ReadNetCDF]{ReadNetCDF()}} can
 be also valid for \code{\link[=GlanceNetCDF]{GlanceNetCDF()}}.}
 }
 \value{
@@ -135,6 +135,7 @@ field <- ReadNetCDF(file, vars = c(var = names(variables$vars[1])))
 field[, var2 := ReadNetCDF(file, out = "vector")]
 
 \dontrun{
+if (!interactive())
 # Using a DAP url
 url <- "http://iridl.ldeo.columbia.edu/SOURCES/.Models/.SubX/.GMAO/.GEOS_V2p1/.hindcast/.ua/dods"
 field <- ReadNetCDF(url, subset = list(M = 1,

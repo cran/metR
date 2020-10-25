@@ -57,3 +57,4 @@ test_that("can read from urls", {
     expect_class(GlanceNetCDF(url), "nc_glance")
 })
 
+

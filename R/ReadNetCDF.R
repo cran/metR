@@ -10,11 +10,11 @@
 #'      (this includes DAP urls).
 #'    * A netcdf object returned by [ncdf4::nc_open()].
 #' @param vars a character vector with the name of the variables to read. If
-#' \code{NULL}, then it read all the variables.
+#' \code{NULL}, then it reads all the variables.
 #' @param out character indicating the type of output desired
 #' @param subset a list of subsetting objects. See below.
 #' @param key if `TRUE`, returns a data.table keyed by the dimensions of the data.
-#' @param ... ignored. Is there for convenience so that a call to [ReadNetCDF()] can
+#' @param ... in [GlanceNetCDF()], ignored. Is there for convenience so that a call to [ReadNetCDF()] can
 #' be also valid for [GlanceNetCDF()].
 #'
 #' @section Subsetting:
@@ -109,6 +109,7 @@
 #' field[, var2 := ReadNetCDF(file, out = "vector")]
 #'
 #' \dontrun{
+#' if (!interactive())
 #' # Using a DAP url
 #' url <- "http://iridl.ldeo.columbia.edu/SOURCES/.Models/.SubX/.GMAO/.GEOS_V2p1/.hindcast/.ua/dods"
 #' field <- ReadNetCDF(url, subset = list(M = 1,
@@ -127,7 +128,6 @@
 #'
 #' @export
 #' @importFrom lubridate years weeks days hours minutes seconds milliseconds ymd_hms
-#' @import data.table
 ReadNetCDF <- function(file, vars = NULL,
                        out = c("data.frame", "vector", "array"),
                        subset = NULL, key = FALSE) {
@@ -145,8 +145,8 @@ ReadNetCDF <- function(file, vars = NULL,
         assertURLFile(file, add = checks)
     }
 
-    assertCharacter(vars, null.ok = TRUE, any.missing = FALSE, unique = TRUE,
-                    add = checks)
+    # assertCharacter(vars, null.ok = TRUE, any.missing = FALSE, unique = TRUE,
+    #                 add = checks)
     assertChoice(out, c("data.frame", "vector", "array", "vars"), add = checks)
     assertList(subset, types = c("vector", "POSIXct", "POSIXt", "Date", "list"), null.ok = TRUE, add = checks)
     # assertNamed(subset, c("unique"), add = checks)
@@ -172,8 +172,9 @@ ReadNetCDF <- function(file, vars = NULL,
     }
 
     if (is.null(vars)) {
-        vars <- names(ncfile$var)
+        vars <- as.list(names(ncfile$var))
     }
+
 
     # Vars must be a (fully) named vector.
     varnames <- names(vars)
@@ -183,6 +184,7 @@ ReadNetCDF <- function(file, vars = NULL,
         no.names <- nchar(varnames) == 0
         names(vars)[no.names] <- vars[no.names]
     }
+
 
     # Leo las dimensiones.
     dims <- names(ncfile$dim)
@@ -231,7 +233,7 @@ ReadNetCDF <- function(file, vars = NULL,
 
     for (v in seq_along(vars)) {
         # Para cada variable, veo start y count
-        order <- ncfile$var[[vars[v]]]$dimids
+        order <- ncfile$var[[vars[[v]]]]$dimids
         start <- rep(1, length(order))
         names(start) <- names(dimensions[dims[as.character(order)]])
         count <- rep(-1, length(order))
@@ -267,15 +269,13 @@ ReadNetCDF <- function(file, vars = NULL,
         }
 
 
-        var1 <- ncdf4::ncvar_get(ncfile, vars[v], collapse_degen = FALSE, start = start,
-                                 count = count)
-        dimnames(var1) <- sub.dimensions[dims[as.character(order)]]
+        var1 <- .read_vars(varid = vars[[v]], ncfile = ncfile, start = start, count = count)
 
+        dimnames(var1) <- sub.dimensions[dims[as.character(order)]]
 
         dim.length[v] <- length(order)
         nc[[v]] <- var1
         nc_dim[[v]] <- as.vector(sub.dimensions[dims[as.character(order)]])
-
     }
 
     if (out[1] == "array") {
@@ -303,6 +303,8 @@ ReadNetCDF <- function(file, vars = NULL,
 
     return(nc.df[][])
 }
+
+
 
 .parse_time <- function(time, units) {
     has_since <- grepl("since", units)
@@ -336,6 +338,13 @@ ReadNetCDF <- function(file, vars = NULL,
     time <- udunits2::ud.convert(time, units,
                                  "seconds since 1970-01-01 00:00:00")
     as.POSIXct(time, tz = "UTC", origin = "1970-01-01 00:00:00")
+}
+
+.read_vars <- function(varid, ncfile, start, count) {
+
+    var <- ncdf4::ncvar_get(nc = ncfile, varid = varid, collapse_degen = FALSE, start = start,
+                             count = count)
+    var
 }
 
 .expand_chunks <- function(subset) {
@@ -415,6 +424,7 @@ print.nc_glance <- function(x, ...) {
 
 #' @export
 print.ncvar4 <- function(x, ...) {
+    # browser()
     cat(x$name, ":\n", sep = "")
     cat("    ", x$longname, sep = "")
 
@@ -426,6 +436,11 @@ print.ncvar4 <- function(x, ...) {
     cat("    Dimensions: ")
     cat(paste0(dims, collapse = " by "), sep = "")
     cat("\n")
+
+    if (x$hasScaleFact) {
+        cat("    (Scaled)")
+        cat("\n")
+    }
 
     return(invisible(x))
 }
@@ -447,6 +462,7 @@ print.ncdim4 <- function(x, ...) {
         units,"\n", sep = "")
     return(invisible(x))
 }
+
 
 
 .melt_array <- function(array, dims, value.name = "V1") {

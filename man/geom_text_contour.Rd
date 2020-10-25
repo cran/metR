@@ -21,8 +21,8 @@ geom_label_contour(
   parse = FALSE,
   nudge_x = 0,
   nudge_y = 0,
-  label.padding = unit(0.25, "lines"),
-  label.r = unit(0.15, "lines"),
+  label.padding = grid::unit(0.25, "lines"),
+  label.r = grid::unit(0.15, "lines"),
   label.size = 0.25,
   na.rm = FALSE,
   show.legend = NA,
@@ -36,8 +36,9 @@ geom_text_contour(
   position = "identity",
   ...,
   min.size = 5,
-  skip = 0,
+  skip = 1,
   rotate = TRUE,
+  label.placement = label_placement_flattest(),
   parse = FALSE,
   nudge_x = 0,
   nudge_y = 0,
@@ -74,7 +75,8 @@ from a \code{formula} (e.g. \code{~ head(.x, 10)}).}
 layer, as a string.}
 
 \item{position}{Position adjustment, either as a string, or the result of
-a call to a position adjustment function.}
+a call to a position adjustment function. Cannot be jointy specified with
+\code{nudge_x} or \code{nudge_y}.}
 
 \item{...}{Other arguments passed on to \code{\link[ggplot2:layer]{layer()}}. These are
 often aesthetics, used to set an aesthetic to a fixed value, like
@@ -89,10 +91,12 @@ to the paired geom/stat.}
 displayed as described in \code{?plotmath}.}
 
 \item{nudge_x}{Horizontal and vertical adjustment to nudge labels by.
-Useful for offsetting text from points, particularly on discrete scales.}
+Useful for offsetting text from points, particularly on discrete scales.
+Cannot be jointly specified with \code{position}.}
 
 \item{nudge_y}{Horizontal and vertical adjustment to nudge labels by.
-Useful for offsetting text from points, particularly on discrete scales.}
+Useful for offsetting text from points, particularly on discrete scales.
+Cannot be jointly specified with \code{position}.}
 
 \item{label.padding}{Amount of padding around label. Defaults to 0.25 lines.}
 
@@ -116,19 +120,23 @@ the default plot specification, e.g. \code{\link[ggplot2:borders]{borders()}}.}
 
 \item{rotate}{logical indicating whether to rotate text following the contour.}
 
+\item{label.placement}{A function for placing labels (see \code{label_placement_flattest()}).}
+
 \item{stroke}{numerical indicating width of stroke relative to the size of
 the text. Ignored if less than zero.}
 
 \item{stroke.color}{any valid colour.}
 
 \item{check_overlap}{If \code{TRUE}, text that overlaps previous text in the
-same layer will not be plotted.}
+same layer will not be plotted. \code{check_overlap} happens at draw time and in
+the order of the data. Therefore data should be arranged by the label
+column before calling \code{geom_label()} or \code{geom_text()}.}
 }
 \description{
-Draws labels on contours built with \link[ggplot2:stat_contour]{ggplot2::stat_contour}.
+Draws labels on contours built with \link[ggplot2:geom_contour]{ggplot2::stat_contour}.
 }
 \details{
-Is best used with a previous call to \link[ggplot2:stat_contour]{ggplot2::stat_contour} with the same
+Is best used with a previous call to \link[ggplot2:geom_contour]{ggplot2::stat_contour} with the same
 parameters (e.g. the same \code{binwidth}, \code{breaks}, or \code{bins}).
 Note that while \code{geom_text_contour()} can angle itself to follow the contour,
 this is not the case with \code{geom_label_contour()}.
@@ -162,6 +170,21 @@ g <- ggplot(v, aes(Var1, Var2)) +
 g + geom_text_contour(aes(z = value))
 
 g + geom_text_contour(aes(z = value), stroke = 0.2)
+
+g + geom_text_contour(aes(z = value), rotate = FALSE)
+
+g + geom_text_contour(aes(z = value),
+                      label.placement = label_placement_random())
+
+g + geom_text_contour(aes(z = value),
+                      label.placement = label_placement_n(3))
+
+
+g + geom_text_contour(aes(z = value),
+                      label.placement = label_placement_flattest())
+
+g + geom_text_contour(aes(z = value),
+                      label.placement = label_placement_flattest(ref_angle = 90))
 
 }
 \seealso{

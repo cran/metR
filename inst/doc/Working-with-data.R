@@ -2,6 +2,7 @@
 knitr::opts_chunk$set(
 collapse = TRUE,
 comment = "#>",
+dev = "jpeg",
 fig.width = 7,
 cache = FALSE
 )

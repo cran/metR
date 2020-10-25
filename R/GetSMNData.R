@@ -56,10 +56,11 @@
 GetSMNData <- function(date, type = c("hourly", "daily", "radiation"),  bar = FALSE,
                        cache = TRUE, file.dir = tempdir()) {
     checks <- makeAssertCollection()
-    assertDate(as.Date(date), upper = as.Date(lubridate::now()),
+    assertDate(as.Date(date), upper = as.Date(Sys.Date()),
                .var.name = "date", add = checks)
     assertChoice(type, c("hourly", "daily", "radiation"), add = checks)
     assertFlag(bar, add = checks)
+    date <- as.Date(date)
 
     if (isTRUE(cache)) {
         assertAccess(file.dir, add = checks)
@@ -67,7 +68,7 @@ GetSMNData <- function(date, type = c("hourly", "daily", "radiation"),  bar = FA
     reportAssertions(checks)
 
     if (cache) {
-        file.name <- paste0(digest::digest(paste0(c(date, type[1]), collapse = "_")), ".csv")
+        file.name <- paste0(digest::digest(list(date, type[1])), ".csv")
         file <- file.path(file.dir, file.name)
         if (file.exists(file)) {
             data <- data.table::fread(file)
@@ -79,7 +80,7 @@ GetSMNData <- function(date, type = c("hourly", "daily", "radiation"),  bar = FA
 
     if (bar == TRUE) pb <- txtProgressBar(min = 0, max = length(date), style = 3)
 
-    return.data <- rbindlist(lapply(seq_along(date), function(i) {
+    return.data <- data.table::rbindlist(lapply(seq_along(date), function(i) {
         if (bar == TRUE) setTxtProgressBar(pb, i)
         if (type[1] == "hourly") {
             data <- .smnhourly(date[i])
@@ -117,20 +118,19 @@ GetSMNData <- function(date, type = c("hourly", "daily", "radiation"),  bar = FA
         variables <- c("start", "date", "hour", "t", "rh", "slp", "dir", "V", "station")
         charend <- c(1, 9, 15, 21, 26, 34, 39, 44, 101)
 
-        obs <- as.data.table(lapply(seq_along(variables)[-1], function(x) {
+        obs <- data.table::as.data.table(lapply(seq_along(variables)[-1], function(x) {
             s <- stringr::str_squish(stringr::str_sub(obs, charend[x - 1], charend[x] -1))
             if(variables[x] != "station") s <- as.numeric(s)
             s
         }))
 
-        setnames(obs, variables[-1])
+        data.table::setnames(obs, variables[-1])
         obs <- obs[, -1]
         obs <- obs[!is.na(hour)]
-
-        date <- lubridate::as_datetime(date, tz = "America/Argentina/Buenos_Aires")
-        lubridate::hour(date) <- obs$hour
-        obs$date <- lubridate::as_datetime(date)
+        obs$date <- with(obs, as.POSIXct(paste0(date, " ", hour, ":00:00"), tz = "America/Argentina/Buenos_Aires"))
+        hour <- NULL
         obs[, hour := NULL]
+        obs[, date := lubridate::with_tz(date, "UTC")][]
         return(obs)
     } else {
         return(NULL)
@@ -182,6 +182,7 @@ GetSMNData <- function(date, type = c("hourly", "daily", "radiation"),  bar = FA
     ush$station <- "Ushuaia"
 
     obs <- rbind(bs, ush)
-    obs[, date := lubridate::as_datetime(date)]
+    obs[, date := lubridate::as_datetime(date, tz = "America/Argentina/Buenos_Aires")]
+    obs[, date := lubridate::with_tz(date, "UTC")]
     return(obs)
 }

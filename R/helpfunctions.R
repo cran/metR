@@ -36,6 +36,7 @@ is.error <- function(x) inherits(x, "try-error")
 
 
 # from data.table
+#' @importFrom data.table %chin%
 guess <- function (x) {
     if ("value" %chin% names(x))
         return("value")
@@ -167,7 +168,7 @@ if(getRversion() >= "2.15.1") {
           "u.mean", "v.mean", "write.csv", "x", "y", "z", ".", "time2",
           "group", "step", "point", "change", "end", "level", "m", "rotate",
           "x.d", "y.d", "PC", "step2", "runif", "N", "angle", "var", "head",
-          "col__", "row__", "t1", "z1", "z2", "..n"))
+          "col__", "row__", "t1", "z1", "z2", "..n", ".N", ":=", ".SD", ".I", ".GRP"))
 }
 
 
@@ -284,10 +285,10 @@ check_packages <- function(packages, fun) {
 
     if (length(missing != 0)) {
         text <- paste0(fun, " needs packages ",
-               paste0(missing, collapse = ", "),
-               ". Install with: \n",
-               "`install.packages(c(\"",
-               paste0(missing, collapse = "\", \""), "\"))`")
+                       paste0(missing, collapse = ", "),
+                       ". Install with: ",
+                       "`install.packages(c(\"",
+                       paste0(missing, collapse = "\", \""), "\"))`")
         stop(text)
     }
 }
@@ -295,6 +296,56 @@ check_packages <- function(packages, fun) {
 .datatable.aware <- TRUE
 
 a <- 6371000
+
+
+smooth2d <- function(x, y, value, kx = 1, ky = 1) {
+    data <- data.table::data.table(x, y, value)
+    # browser()
+    g <- .tidy2matrix(data, x ~ y, value.var = "value")
+
+    f <- fft(g$matrix)
+    f1 <- f
+
+    kx <- c(0, seq_len(floor(nrow(f)/2*kx)))
+    kx <- c(kx + 1, nrow(f) - kx[kx != 0] + 1)
+
+    ky <- c(0, seq_len(floor(ncol(f)/2*ky)))
+    ky <- c(ky + 1, ncol(f) - ky[ky != 0] + 1)
+
+    f1[, -ky] <- 0
+    f1[-kx, ] <- 0
+
+    c(Re(fft(f1, inverse = TRUE)/length(f1)))
+}
+
+
+downsample <- function(x, y, value, byx = 1, byy = 1, fill = mean) {
+    data <- data.table::data.table(x, y, value)
+    browser()
+    fill <- mean(value, na.rm = TRUE)
+    g <- .tidy2matrix(data, x ~ y, value.var = "value", fill = fill)
+    g$matrix[is.na(g$matrix)] <- fill
+    f <- fft(g$matrix)
+    f1 <- f
+
+    kx <- 1/byx
+    ky <- 1/byy
+
+    kx <- c(0, seq_len(floor(nrow(f)/2*kx)))
+    kx <- c(kx + 1, nrow(f) - kx[kx != 0] + 1)
+
+    ky <- c(0, seq_len(floor(ncol(f)/2*ky)))
+    ky <- c(ky + 1, ncol(f) - ky[ky != 0] + 1)
+
+    f1[, -ky] <- 0
+    f1[-kx, ] <- 0
+
+    data$value_smooth <- c(Re(fft(f1, inverse = TRUE)/length(f1)))
+
+    data <- subset(data, x %in% JumpBy(sort(unique(x)), byx) &
+                       y %in% JumpBy(sort(unique(y)), byy))
+    data
+}
 
 # nocov end
 
