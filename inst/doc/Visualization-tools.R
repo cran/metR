@@ -7,21 +7,12 @@ fig.width = 7,
 comment = "#>")
 
 ## ---- message = FALSE---------------------------------------------------------
+# Packages and data use throught 
 library(metR)
 library(ggplot2)
 library(data.table)
 temperature <- copy(temperature)
 temperature[, air.z := Anomaly(air), by = .(lat, lev)]
-
-# Plot made with base ggplot
-(g <- ggplot(temperature[lon %~% 180], aes(lat, lev, z = air.z)) +
-        geom_contour2(aes(color = ..level..)))
-
-## -----------------------------------------------------------------------------
-g + 
-    scale_y_level() +
-    scale_x_latitude(ticks = 15, limits = c(-90, 90)) +
-    scale_color_divergent()
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lon %~% 180], aes(lat, lev, z = air.z)) +
@@ -42,6 +33,7 @@ ggplot(volcano, aes(Var1, Var2, z = value.gap)) +
     geom_contour_fill(na.fill = TRUE) 
 
 ## -----------------------------------------------------------------------------
+data(surface)
 ggplot(surface, aes(lon, lat)) +
   geom_point(aes(color = height))
 
@@ -72,55 +64,54 @@ ggplot(some_volcano, aes(Var1, Var2)) +
   geom_point(size = 0.2)
 
 ## -----------------------------------------------------------------------------
-ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
-    geom_contour_fill() +
-    geom_contour(color = "black") +
-    geom_text_contour() +
-    scale_fill_divergent() +
-    scale_x_longitude() +
-    scale_y_latitude()
-
-## -----------------------------------------------------------------------------
-ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
-    geom_contour_fill() +
-    geom_contour2(color = "black") +
-    geom_text_contour(stroke = 0.2) +
-    scale_fill_divergent() +
-    scale_x_longitude() +
-    scale_y_latitude()
-
-## -----------------------------------------------------------------------------
-ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
-    geom_contour_fill() +
-    geom_contour2(color = "black") +
-    geom_text_contour(stroke = 0.2, label.placement = label_placement_random()) +
-    scale_fill_divergent() +
-    scale_x_longitude() +
-    scale_y_latitude()
-
-## -----------------------------------------------------------------------------
 ggplot(temperature[lev %in% c(1000, 300)], aes(lon, lat, z = air.z)) +
   geom_contour_fill() +
   scale_fill_divergent() +
-  scale_x_longitude() +
-  scale_y_latitude() +
   facet_grid(~lev)
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev %in% c(1000, 300)], aes(lon, lat, z = air.z)) +
   geom_contour_fill(global.breaks = FALSE) +
   scale_fill_divergent() +
-  scale_x_longitude() +
-  scale_y_latitude() +
   facet_grid(~lev)
+
+## -----------------------------------------------------------------------------
+ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
+    geom_contour_fill()
+
+ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
+    geom_contour_fill(aes(fill = stat(level)))
+
+## -----------------------------------------------------------------------------
+ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
+    geom_contour_fill(aes(fill = stat(level_d)))
+
+## -----------------------------------------------------------------------------
+ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
+    geom_contour_fill() +
+    geom_contour(color = "black") +
+    geom_text_contour() +
+    scale_fill_divergent() 
+
+## -----------------------------------------------------------------------------
+ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
+    geom_contour_fill() +
+    geom_contour2(color = "black") +
+    geom_text_contour(stroke = 0.2) +
+    scale_fill_divergent() 
+
+## -----------------------------------------------------------------------------
+ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
+    geom_contour_fill() +
+    geom_contour2(color = "black") +
+    geom_text_contour(stroke = 0.2, label.placement = label_placement_random()) +
+    scale_fill_divergent() 
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
      geom_contour_fill() +
      geom_contour_tanaka() +
-     scale_fill_divergent() +
-     scale_x_longitude() +
-     scale_y_latitude()
+     scale_fill_divergent()
 
 ## -----------------------------------------------------------------------------
 data(geopotential)    # geopotential height at 700hPa for the Southern Hemisphere. 
@@ -132,9 +123,7 @@ ggplot(geopotential[, gh.base := gh[lon == 120 & lat == -50], by = date][
     geom_contour_fill(breaks = MakeBreaks(0.1)) +
     stat_subset(aes(subset = correlation > 0.5),
                 geom = "point", size = 0.1) +
-    scale_fill_divergent() +
-    scale_x_longitude() +
-    scale_y_latitude()
+    scale_fill_divergent() 
 
 ## -----------------------------------------------------------------------------
 ggplot(volcano, aes(Var1, Var2, z = value.gap)) +
@@ -151,8 +140,6 @@ temperature[, c("t.dx", "t.dy") := Derivate(air.z ~ lon + lat,
     geom_contour_fill(aes(z = air.z)) +
     geom_vector(aes(dx = t.dx, dy = t.dy), skip.x = 2, 
                 skip.y = 1) +
-    scale_y_latitude(limits = c(-90, 0)) +
-    scale_x_longitude() +
     scale_mag())
 
 ## -----------------------------------------------------------------------------
@@ -168,9 +155,7 @@ ggplot(temperature[lon %between% c(100, 200) & lat == -50], aes(lon, lev)) +
 (g <- ggplot(temperature[lev == 500], aes(lon, lat)) +
      geom_contour_fill(aes(z = air.z)) +
      geom_streamline(aes(dx = t.dy, dy = -t.dx), L = 10, res = 2,   
-                     arrow.length = 0.3, xwrap = c(0, 360)) + 
-     scale_y_latitude(limits = c(-90, 0)) +
-     scale_x_longitude())
+                     arrow.length = 0.3, xwrap = c(0, 360)))
 
 ## -----------------------------------------------------------------------------
 g + coord_polar()
@@ -180,28 +165,35 @@ ggplot(temperature[lev == 500], aes(lon, lat)) +
     geom_streamline(aes(dx = t.dy, dy = -t.dx, size = ..step.., alpha = ..step..,
                         color = sqrt(..dx..^2 + ..dy..^2)), arrow = NULL,
                     L = 10, res = 2, xwrap = c(0, 360), lineend = "round") + 
-    scale_y_latitude(limits = c(-90, 0)) +
-    scale_x_longitude() +
     scale_color_viridis_c(guide = "none") +
     scale_size(range = c(0, 1), guide = "none") +
     scale_alpha(guide = "none")
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
-    geom_contour2(aes(color = ..level..), breaks = MakeBreaks(2)) +
-    scale_color_divergent(guide = "legend",
-                          breaks = MakeBreaks(2)) +
-    scale_x_longitude() +
-    scale_y_latitude() + theme(legend.position = "bottom")
+    geom_contour_fill(aes(fill = stat(level)), breaks = c(-10, -8, -6, -2, -1, 0, 6, 8, 10)) +
+  guides(fill = guide_colorsteps())
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
-    geom_contour_fill(breaks = MakeBreaks(2)) +
-    scale_fill_divergent(guide = "colorstrip",
-                         breaks = MakeBreaks(2)) +
-    scale_x_longitude() +
-    scale_y_latitude() + 
-    theme(legend.position = "bottom")
+  geom_contour_fill(aes(fill = stat(level)), breaks = c(-10, -8, -6, -2, -1, 0, 6, 8, 10)) +
+  scale_fill_discretised()
+
+## -----------------------------------------------------------------------------
+ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
+  geom_contour_fill(aes(fill = stat(level)), breaks = c(-10, -8, -6, -2, -1, 0, 6, 8, 10)) +
+  scale_fill_divergent_discretised(midpoint = 3)
+
+## ---- message = FALSE---------------------------------------------------------
+# Plot made with base ggplot
+(g <- ggplot(temperature[lon %~% 180], aes(lat, lev, z = air.z)) +
+        geom_contour2(aes(color = ..level..)))
+
+## -----------------------------------------------------------------------------
+g + 
+    scale_y_level() +
+    scale_x_latitude(ticks = 15, limits = c(-90, 90)) +
+    scale_color_divergent()
 
 ## -----------------------------------------------------------------------------
 ggplot(volcano, aes(Var1, Var2)) +

@@ -1,3 +1,41 @@
+# metR 0.9.0
+
+## New Features
+
+- I'm very happy with `discretised_scale()`, which is a type of scale which takes a 
+discrete values that are the result of some discretisation and treats them as 
+continuous. It's, in a sense, the inverse of the new `ggplot2::binned_scale()`. 
+Whereas. `ggplot2::binned_scale()` takes continuous values and then discretises
+them, `discretised_scale()` takes discrete values which where the result of some
+discretisation procedure (such as the levels of `geom_contour_fill()`/`ggplot2::geom_contour_filled()`) 
+and allows you to treat them as continuous. 
+
+- Related to that, `geom_contour_fill()` now gains a new computed aesthetic called `level_d`,
+which is the same as `level` but forces ggplot2 to automatically use the new discretised scale.
+
+- `AnchorBreaks()` gains a `bins` argument to mimic the default functionality of 
+`MakeBreaks()`. 
+
+- New `label_placement_minmax()` to label contours at the maximum and minimum 
+points of a contour (mimicking [isoband's behaviour](https://wilkelab.org/isoband/articles/isoband3.html))
+
+- `geom_contour_tanaka()` now has a (rather experimental) argument `smooth` which allows to smooth
+the transition between segments. 
+
+
+## Bugfixes
+
+- Fixes error introduced in previous version when `geom_arrow()` had mappings other
+than `dx` and `dy`. (Thanks Santiago!)
+
+- The `level` derived aesthetic from `geom_contour_fill()` now returns and ordered factor
+with the correct labels that can be interpreted by `ggplot2::guide_colorsteps()`. This might 
+a breaking change!
+
+- `geom_label_contour()` lives! The previous release rewrote much of the way `geom_text_contour()` 
+worked, but I messed up and didn't realised that the new code had broken `geom_label_contour()` 
+(to be honest, I'd almost totally forgotten about it :P). (fixes #126, thanks @kongdd)
+
 # metR 0.8.0
 
 ## New features
@@ -174,7 +212,7 @@ the rest of the variables. Sorry, thermodynamics is not my forte! (thanks @PaoCo
 There has been some changes in the interface of some functions for the sake of 
 consistency.
 
-- In `Derivate()` (and it's derivated functions --see what I did there?), the
+- In `Derivate()` (and it's derived functions --see what I did there?), the
 `data` argument has been moved back. This is because this function is intended to
 be called inside a `data.table` of `mutate()` call, where you don't need to 
 explicitly specify the data.

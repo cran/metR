@@ -2,6 +2,7 @@ library(ggplot2)
 library(data.table)
 library(vdiffr)
 
+skip_on_ci()
 
 context("Streamline")
 geo <- geopotential[date == date[1]]
@@ -14,13 +15,16 @@ basic_stat_streamline <- ggplot(geo, aes(lon, lat)) +
     stat_streamline(aes(dx = dlon(u, lat), dy = dlat(v)), res = 1/3, L = 10, skip = 2)
 
 test_that("Streamline works", {
-    skip_on_ci()
-    expect_doppelganger("streamline-base", basic_geom_streamline)
-    expect_doppelganger("streamline-base", basic_stat_streamline)
+    # skip_on_ci()
+    writer_warnings <- function(...) suppressWarnings(vdiffr::write_svg(...))
+
+    expect_warning(invisible(print(basic_geom_streamline)), "performing only 1 integration step")
+    expect_doppelganger("streamline-base", basic_geom_streamline, writer = writer_warnings)
+    expect_doppelganger("streamline-base", basic_stat_streamline, writer = writer_warnings)
 })
 
 test_that("Streamline wraps in x amd y", {
-    skip_on_ci()
+    # skip_on_ci()
     expect_doppelganger("streamline-xwrapped",
                         ggplot(geo, aes(lon, lat)) +
                             geom_streamline(aes(dx = u, dy = v), L = 20,
@@ -45,8 +49,8 @@ test_that("Streamline ignores irregular grids", {
     g2 <- ggplot(geo, aes(lon, lat)) +
         geom_streamline(aes(dx = dlon(u, lat), dy = dlat(v)), L = 20)
 
-    expect_warning(print(g), "x and y do not define a regular grid")
-    expect_warning(print(g2), "x and y do not define a regular grid")
+    expect_warning(invisible(print(g)), "x and y do not define a regular grid")
+    expect_warning(invisible(print(g2)), "x and y do not define a regular grid")
 
     skip_on_ci()
 })

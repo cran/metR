@@ -109,14 +109,16 @@ geom_arrow <- function(mapping = NULL, data = NULL,
                        show.legend = NA,
                        inherit.aes = TRUE) {
 
-  # browser()
-
   if (is.null(mapping$mag) & is.null(mapping$angle)) {
     dx <- paste0(substr(deparse(mapping$dx), 2, nchar(deparse(mapping$dx))))
     dy <- paste0(substr(deparse(mapping$dy), 2, nchar(deparse(mapping$dy))))
     mag <- paste0("sqrt(", dx, "^2 + ", dy, "^2)" )
     angle <- paste0("atan2(", dy, ", ", dx, ")*180/pi")
-    mapping <- ggplot2::aes_string(mag = mag, angle= angle)
+    mapping2 <- ggplot2::aes_string(mag = mag, angle= angle)
+    mapping$dx <- NULL
+    mapping$dy <- NULL
+    mapping$mag <- mapping2$mag
+    mapping$angle <- mapping2$angle
 
   }
 
@@ -173,9 +175,14 @@ geom_vector <- function(mapping = NULL, data = NULL,
     dy <- paste0(substr(deparse(mapping$dy), 2, nchar(deparse(mapping$dy))))
     mag <- paste0("sqrt(", dx, "^2 + ", dy, "^2)" )
     angle <- paste0("atan2(", dy, ", ", dx, ")*180/pi")
-    mapping <- ggplot2::aes_string(mag = mag, angle= angle)
+    mapping2 <- ggplot2::aes_string(mag = mag, angle= angle)
+    mapping$dx <- NULL
+    mapping$dy <- NULL
+    mapping$mag <- mapping2$mag
+    mapping$angle <- mapping2$angle
 
   }
+
 
   ggplot2::layer(geom = GeomArrow,
                  mapping = mapping,
@@ -334,8 +341,10 @@ StatArrow <- ggplot2::ggproto("StatArrow", ggplot2::Stat,
     data <- subset(data, x %in% JumpBy(sort(unique(x)), params$skip.x + 1) &
                      y %in% JumpBy(sort(unique(y)), params$skip.y + 1) &
                      mag >= params$min.mag)
+    if (nrow(data) > 0){
+      data$norm_mag <- with(data, mag/max(mag, na.rm = TRUE))
+    }
 
-    data$norm_mag <- with(data, mag/max(mag, na.rm = TRUE))
     data
   },
   compute_panel = function(self, data, scales,
