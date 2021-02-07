@@ -71,6 +71,7 @@ as.discretised <- function(x) {
   x
 }
 
+
 #' Discretised scale
 #'
 #' This scale allows ggplot to understand data that has been discretised with

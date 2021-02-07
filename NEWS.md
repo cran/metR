@@ -1,3 +1,26 @@
+# metR 0.9.1
+
+## New Features
+
+- `as.discretised_scale()` is a quick way of created a discretised version of any 
+continuous scale. 
+
+-  `stroke.colour` is now an accepted aesthetic for `geom_text_contour()`. 
+
+## Bugfixes
+
+- The computations in `MixingRatio()` were wrong. Now they are fixed. 
+
+- I really wanted `geom_arrow()` to automatically add the arrow legend, but the
+workarounds I managed to write were brittle and couldn't handle even slight 
+changes in people's code (see https://github.com/eliocamp/metR/issues/130). The definitive 
+answer is that this is simply not possible due to limitations on how ggplot2 works
+(see https://github.com/tidyverse/ggplot2/issues/4291).
+This release, then, backtracks those workarounds and tries to accept the things I cannot change.
+
+
+
+
 # metR 0.9.0
 
 ## New Features

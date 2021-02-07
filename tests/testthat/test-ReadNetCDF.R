@@ -3,21 +3,27 @@ context("ReadNetCDF")
 
 file <- system.file("extdata", "temperature.nc", package = "metR")
 test_that("returns a data.table", {
-    expect_known_output(ReadNetCDF(file),
-                        "readnetcdf_default")
+    expect_s3_class(ReadNetCDF(file),
+                        "data.table")
+})
+
+test_that("GlanceNetCDF prints nicely", {
+    expect_known_output(print(GlanceNetCDF(file)), "GlanceNetCDF")
+
 })
 
 test_that("subsetting works", {
-    expect_known_output(ReadNetCDF(file,
-                                   subset = list(lat = -90:20)),
-                        "readnetcdf_subset")
+    r <- ReadNetCDF(file,
+                    subset = list(lat = -90:20))
+
+    expect_equal(range(r$lat), c(-90, 20))
 
 
     s <-  list(
         list(lat = -90:-70, lon = 0:60),
         list(lat = 70:90, lon = 300:360)
     )
-    expect_known_output(ReadNetCDF(file, subset = s), "readnetcdf_unnamed_subset")
+    expect_known_value(ReadNetCDF(file, subset = s), "readnetcdf_unnamed_subset")
 
 })
 
@@ -39,14 +45,13 @@ test_that("different outs work", {
 test_that("time dimension without 'since' works", {
     file <- "weird_datesmall.nc"
     read <- ReadNetCDF(file)
-    expect_known_output(ReadNetCDF(file), "readnetcdf_time_hours")
+    expect_true(!is.null(read$time))
 })
 
 
 test_that("can read from nc_open", {
     nc <- ncdf4::nc_open(file)
-    expect_known_value(ReadNetCDF(nc), "readnetcdf_nc_open")
-    expect_known_value(ReadNetCDF(nc), "readnetcdf_nc_open2")
+    expect_error(ReadNetCDF(nc), NA)
 })
 
 
@@ -54,7 +59,8 @@ test_that("can read from urls", {
     url <- "http://iridl.ldeo.columbia.edu/SOURCES/.Models/.SubX/.GMAO/.GEOS_V2p1/.hindcast/.ua/dods"
     skip_if_offline()
     skip_on_cran()
-    expect_class(GlanceNetCDF(url), "nc_glance")
+    expect_s3_class(GlanceNetCDF(url), "nc_glance")
 })
+
 
 
