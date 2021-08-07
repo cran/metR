@@ -1,12 +1,49 @@
 # nocov start
 
+
+# Helper functions for translation
+catf = function(fmt, ..., sep = " ", domain = "R-metR") {
+    cat(gettextf(fmt, ..., domain = domain), sep = sep)
+}
+
+stopf <- function(fmt, ..., call. = TRUE, domain = "R-metR") {
+    x <- gettextf(fmt, ..., domain = domain)
+    if (isTRUE(call.)) {
+        call = sys.call(-1)
+    } else {
+        call = NULL
+    }
+    e <- simpleError(x, call = call)
+    stop(e)
+}
+
+
+warningf <- function (fmt, ..., call. = TRUE, immediate. = FALSE, noBreaks. = FALSE,
+                      domain = "R-metR") {
+    x <- gettextf(fmt, ..., domain = domain)
+    if (isTRUE(call.)) {
+        call = sys.call(-1)
+    } else {
+        call = NULL
+    }
+    e <- simpleWarning(x, call = call)
+    warning(e)
+}
+
+
+messagef = function(fmt, ..., appendLF = TRUE, domain = "R-metR") {
+    message(gettextf(fmt, ..., domain = domain), domain = NA, appendLF = appendLF)
+}
+
+
 .tidy2matrix <- function(data, formula, value.var, fill = NULL, ...) {
+    # browser()
     row.vars <- all.vars(formula[[2]])
     col.vars <- all.vars(formula[[3]])
     data <- data.table::as.data.table(data)
     data[, row__ := .GRP, by = c(row.vars)]
     data[, col__ := .GRP, by = c(col.vars)]
-    if (is.null(fill)){
+    if (is.null(fill)) {
         fill <- 0
         # rowdims <- data[col__ == 1, (row.vars), with = FALSE]
         # coldims <- data[row__ == 1, (col.vars), with = FALSE]
@@ -26,7 +63,7 @@
 }
 
 
-seq_range <- function(x, by = ggplot2::resolution(x, zero = FALSE),...) {
+seq_range <- function(x, by = ggplot2::resolution(x, zero = FALSE), ...) {
     r <- range(x)
     seq.int(r[1], r[2], by = by, ...)
 }
@@ -43,7 +80,7 @@ guess <- function (x) {
     if ("(all)" %chin% names(x))
         return("(all)")
     var <- names(x)[ncol(x)]
-    message("Using '", var, "' as value column. Use 'value.var' to override")
+    messagef("Using \"%s\" as value column. Use 'value.var' to override", var)
     return(var)
 }
 
@@ -52,7 +89,7 @@ guess <- function (x) {
     if (!is.null(a)) a else b
 }
 # from ggplot2
-is.waive <- function (x) {
+is.waive <- function(x) {
     inherits(x, "waiver")
 }
 
@@ -61,7 +98,7 @@ element_render <- function(theme, element, ..., name = NULL) {
     # Get the element from the theme, calculating inheritance
     el <- ggplot2::calc_element(element, theme)
     if (is.null(el)) {
-        message("Theme element ", element, " missing")
+        messagef("Theme element %s missing", element)
         return(ggplot2::zeroGrob())
     }
 
@@ -83,7 +120,7 @@ width_cm <- function(x) {
     } else if (is.list(x)) {
         vapply(x, width_cm, numeric(1))
     } else {
-        stop("Unknown input")
+        stopf("Unknown input.")
     }
 }
 height_cm <- function(x) {
@@ -94,7 +131,7 @@ height_cm <- function(x) {
     } else if (is.list(x)) {
         vapply(x, height_cm, numeric(1))
     } else {
-        stop("Unknown input")
+        stopf("Unknown input.")
     }
 }
 
@@ -150,9 +187,7 @@ rename_aes <- function(x) {
     duplicated_names <- names(x)[duplicated(names(x))]
     if (length(duplicated_names) > 0L) {
         duplicated_message <- paste0(unique(duplicated_names), collapse = ", ")
-        warning(
-            "Duplicated aesthetics after name standardisation: ", duplicated_message, call. = FALSE
-        )
+        warningf("Duplicated aesthetics after name standardisation: %s", duplicated_message, call. = FALSE)
     }
     x
 }
@@ -284,12 +319,8 @@ check_packages <- function(packages, fun) {
     missing <- packages[!installed]
 
     if (length(missing != 0)) {
-        text <- paste0(fun, " needs packages ",
-                       paste0(missing, collapse = ", "),
-                       ". Install with: ",
-                       "`install.packages(c(\"",
-                       paste0(missing, collapse = "\", \""), "\"))`")
-        stop(text)
+        stopf("%s needs packages %s. Install them with: 'install.packages(c(\"%s\"))'.",
+              fun, paste0(missing, collapse = ", "), paste0(missing, collapse = "\", \""))
     }
 }
 

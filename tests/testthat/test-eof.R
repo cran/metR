@@ -41,7 +41,7 @@ test_that("EOF fails gracefully", {
     expect_error(EOF(gh ~ lon1 + lat2 | date, data = geopotential),
                  "Columns not found in data: lon1, lat2")
     expect_error(EOF(gh ~ lon | date, data = geopotential),
-                 "The formula  gh ~ lon | date  does not identify an unique observation for each cell.")
+                 "The formula gh ~ lon | date  does not identify an unique observation for each cell.")
 })
 
 test_that("eof methods", {
@@ -64,7 +64,6 @@ test_that("eof methods", {
 
     expect_equal(predict(eof_all, n = 1:5), predict(eof))
 
-    expect_known_output(print(eof), file = "eof_print")
 
     expect_known_output(summary(eof), file = "eof_summary")
 

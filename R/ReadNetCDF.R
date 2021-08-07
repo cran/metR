@@ -9,8 +9,12 @@
 #'    * A string representing a URL readable by [ncdf4::nc_open()].
 #'      (this includes DAP urls).
 #'    * A netcdf object returned by [ncdf4::nc_open()].
-#' @param vars a character vector with the name of the variables to read. If
-#' \code{NULL}, then it reads all the variables.
+#' @param vars one of:
+#'    * `NULL`: reads all variables.
+#'    * a character vector with the name of the variables to read.
+#'    * a function that takes a vector with all the variables and returns either
+#'    a character vector with the name of variables to read or a numeric/logical
+#'    vector that indicates a subset of variables.
 #' @param out character indicating the type of output desired
 #' @param subset a list of subsetting objects. See below.
 #' @param key if `TRUE`, returns a data.table keyed by the dimensions of the data.
@@ -109,7 +113,6 @@
 #' field[, var2 := ReadNetCDF(file, out = "vector")]
 #'
 #' \dontrun{
-#' if (!interactive())
 #' # Using a DAP url
 #' url <- "http://iridl.ldeo.columbia.edu/SOURCES/.Models/.SubX/.GMAO/.GEOS_V2p1/.hindcast/.ua/dods"
 #' field <- ReadNetCDF(url, subset = list(M = 1,
@@ -124,8 +127,13 @@
 #' field <- ReadNetCDF(ncfile, subset = list(M = 1,
 #'                                        P = 10,
 #'                                        S = "1999-01-01"))
-#' }
 #'
+#'
+#' # Using a function in `vars` to read all variables that
+#' # start with "radar_".
+#' ReadNetCDF(radar_file, vars = \(x) startsWith(x, "radar_"))
+#'
+#' }
 #' @export
 #' @importFrom lubridate years weeks days hours minutes seconds milliseconds ymd_hms
 ReadNetCDF <- function(file, vars = NULL,
@@ -133,8 +141,7 @@ ReadNetCDF <- function(file, vars = NULL,
                        subset = NULL, key = FALSE) {
     ncdf4.available <- requireNamespace("ncdf4", quietly = TRUE)
     if (!ncdf4.available) {
-        stop("ReadNetCDF needs package'ncdf4'. ",
-             "Install it with 'install.packages(\"ncdf4\")'")
+        stopf("ReadNetCDF needs package'ncdf4'. Install it with 'install.packages(\"ncdf4\")'")
     }
 
     out <- out[1]
@@ -171,10 +178,33 @@ ReadNetCDF <- function(file, vars = NULL,
         return(r)
     }
 
+    all_vars <- names(ncfile$var)
+
     if (is.null(vars)) {
-        vars <- as.list(names(ncfile$var))
+        vars <- as.list(all_vars)
+    } else if (is.function(vars)) {
+
+        vars_result <- vars(all_vars)
+
+        if (!is.character(vars_result)) {
+            vars <- all_vars[vars_result]
+        } else {
+            vars <- vars_result
+        }
     }
 
+    empty_vars <- length(vars) == 0
+    if (empty_vars) {
+        warningf("No variables selected. Returning NULL")
+        return(NULL)
+    }
+
+    not_valid <- !(vars %in% all_vars)
+
+    if (any(not_valid)) {
+        bad_vars <- paste0(vars[not_valid], collapse = ", ")
+        stopf("Invalid variables selected. Bad variables: %s.", bad_vars)
+    }
 
     # Vars must be a (fully) named vector.
     varnames <- names(vars)
@@ -209,13 +239,13 @@ ReadNetCDF <- function(file, vars = NULL,
     subset_names <- .names_recursive(subset)
     subset.extra <- subset_names[!(subset_names %in% names(dimensions))]
     if (length(subset.extra) != 0) {
-        stop(paste0("Subsetting dimensions not found: ",
-                    paste0(subset.extra, collapse = ", "), "."))
+        stopf("Subsetting dimensions not found: %s.",
+                    paste0(subset.extra, collapse = ", "))
     }
 
     if (length(subset) > 1) {
         if (out != "data.frame") {
-            stop('Multiple subsets only supported for `out = "data.frame"')
+            stopf('Multiple subsets only supported for `out = "data.frame"')
         }
         reads <- lapply(subset, function(this_subset) {
             ReadNetCDF(file = file, vars = vars, out = out, key = key, subset = this_subset)
@@ -268,14 +298,27 @@ ReadNetCDF <- function(file, vars = NULL,
             sub.dimensions[[s]] <- dimensions[[s]][seq.int(start[[s]], start[[s]] + count[[s]] - 1)]
         }
 
-
+        if (all(is.na(order))) {
+            start <- NA
+            count <- NA
+            s <- 1
+        }
         var1 <- .read_vars(varid = vars[[v]], ncfile = ncfile, start = start, count = count)
 
-        dimnames(var1) <- sub.dimensions[dims[as.character(order)]]
+        if (!all(is.na(order))) {
+            # Even with collapse_degen = FALSE, deegenerate dimensions are still an issue
+            correct_dims <- sub.dimensions[dims[as.character(order)]]
+            var1 <- array(var1, dim = lengths(correct_dims))
+
+            dimnames(var1) <- correct_dims
+            nc_dim[[v]] <- as.vector(correct_dims)
+        } else {
+            nc_dim[[v]] <- 0
+        }
 
         dim.length[v] <- length(order)
         nc[[v]] <- var1
-        nc_dim[[v]] <- as.vector(sub.dimensions[dims[as.character(order)]])
+
     }
 
     if (out[1] == "array") {
@@ -313,15 +356,14 @@ ReadNetCDF <- function(file, vars = NULL,
     }
 
     if (!requireNamespace("udunits2", quietly = TRUE)) {
-        message("Time dimension found and package udunits2 is not installed. Trying to parse.")
-        fail <- paste0("Time parsing failed. Returing raw values in ", units, ".\n",
-                       "Install udunits2 with `install_packages(\"udunits2\")` to parse it automatically.")
+        messagef("Time dimension found and package udunits2 is not installed. Trying to parse.", domain = "R-metR")
+        fail <- gettextf("Time parsing failed. Returing raw values in %s.\nInstall udunits2 with 'install_packages(\"udunits2\")' to parse it automatically.", units, domain = "R-metR")
 
         units <- trimws(strsplit(units, "since")[[1]])
 
         period_fun <- try(match.fun(units[1]), silent = TRUE)
         if (is.error(period_fun)) {
-            warning(fail)
+            warning(fail)  # No need to translate here.
             return(time)
         }
 
@@ -329,7 +371,7 @@ ReadNetCDF <- function(file, vars = NULL,
                             period_fun(time),
                         silent = TRUE)
         if (is.error(time_try)) {
-            warning(fail)
+            warning(fail) # No need to translate here.
             return(time)
         }
         return(time_try)
@@ -414,11 +456,11 @@ GlanceNetCDF <- function(file, ...) {
 
 #' @export
 print.nc_glance <- function(x, ...) {
-    cat("----- Variables ----- \n")
+    cat(gettext("----- Variables ----- \n", domain = "R-metR"))
     out <- lapply(x$vars, print)
 
     cat("\n\n")
-    cat("----- Dimensions ----- \n")
+    cat(gettext("----- Dimensions ----- \n", domain = "R-metR"))
     out <- lapply(x$dim, print)
 }
 
@@ -433,12 +475,12 @@ print.ncvar4 <- function(x, ...) {
     cat("\n")
     dims <- vapply(x$dim, function(x) x$name, "a")
 
-    cat("    Dimensions: ")
-    cat(paste0(dims, collapse = " by "), sep = "")
+    cat(gettext("    Dimensions: ", domain = "R-metR"))
+    cat(paste0(dims, collapse = gettext(" by ", domain = "R-metR")), sep = "")
     cat("\n")
 
     if (x$hasScaleFact) {
-        cat("    (Scaled)")
+        cat(gettext("    (Scaled)", domain = "R-metR"))
         cat("\n")
     }
 
@@ -455,17 +497,18 @@ print.ncdim4 <- function(x, ...) {
         units <- ""
     }
 
-    cat("  ", x$name, ": ",
-        x$len, " values from ",
-        as.character(min(vals)), " to ",
-        as.character(max(vals)), " ",
-        units,"\n", sep = "")
+    catf("  %s: %d values from %s to %s %s\n",
+         x$name, x$len, as.character(min(vals)), as.character(max(vals)), units)
     return(invisible(x))
 }
 
 
 
 .melt_array <- function(array, dims, value.name = "V1") {
+    if (!is.array(array)) {
+        return(array)
+    }
+
     # dims <- lapply(dims, c)
     dims <- c(dims[length(dims):1], sorted = FALSE)
     grid <- do.call(data.table::CJ, dims)
