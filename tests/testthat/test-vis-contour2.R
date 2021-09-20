@@ -30,13 +30,6 @@ test_that("accepts function in breaks", {
 file <- system.file("extdata", "met.txt", package = "metR")
 df <- read.table(file, header = FALSE)
 
-test_that("df was read correctly",
-          expect_known_hash(df, "7a56064fc1")
-)
-
-
-
-
 test_that("global.breaks work", {
 
     expect_doppelganger("contour2-global.breaks",
@@ -57,6 +50,21 @@ test_that("global.breaks work", {
 })
 
 
+test_that("labels work", {
+    expect_doppelganger("contour2-labels",
+                        ggplot(geo, aes(lon, lat)) +
+                            geom_contour2(aes(z = gh, label = ..level..))
+    )
+    expect_doppelganger("aesthetics in contour labels",
+                        ggplot(geo, aes(lon, lat)) +
+                            geom_contour2(aes(z = gh,
+                                              label = ..level..,
+                                              label_color = ..level..,
+                                              label_alpha = ..level..,
+                                              label_size = ..level..))
+    )
+
+})
 
 test_that("contour_tanaka works", {
     expect_doppelganger("tanaka",
