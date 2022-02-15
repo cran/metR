@@ -1,3 +1,22 @@
+# metR 0.12.0
+
+## New Features
+
+-   Adds example of `scale_y_level()` (\@paocorrales, #153).
+
+-   `ReadNetCDF()` now should parse times correctly even if the use non-standard calendars.
+    This now makes udunits2 and PCICt required to parse time.
+
+-   Arrays returned by `ReadNetCDF(…, out = "array")` gain a "dimvalues" attribute which is analogous to dimnames but has the correct types (dates are dates, numerics are numerics, etc...).
+
+-   `EOF()` gains a new `engine` argument to chose the function to compute the singular value decomposition.
+
+## Bug Fixes
+
+-   Fixed wrong `sdev` component in `EOF()` when using `base::svd()` in some cases.
+-   `seasonally()` now returns a Date object even if the input is datetime. This avoids issues when the time component of the input was not all the same.
+-   Fixed a bug in `ImputeEOF()` in which the algorithm tried to compute 0 EOFs.
+
 # metR 0.11.0
 
 ## New Features
@@ -6,7 +25,7 @@
     This is finally proper labelling support without having to use a different geom (`geom_text_contour()`).
     Thanks to the isoband package for this.
 
--   Following [isoband's naming convention](https://wilkelab.org/isoband/reference/label_placer.html), the family of functions that decide where to place labels have been renamed as `label_placer_` and the corresponding argument is now `label.placer` .
+-   Following [isoband's naming convention](https://wilkelab.org/isoband/reference/label_placer.html), the family of functions that decide where to place labels has been renamed as `label_placer_` and the corresponding argument is now `label.placer` .
     The `label_placement_` family of functions will be deprecated in future releases.
 
 # metR 0.10.0
@@ -33,20 +52,20 @@
 -   New function `Detrend()` that, you guessed it, returns a (linearly) detrended version of the input vector.
 
 -   In `ReadNetCDF()`, the "vars" argument now can take a function.
-    (\#142)
+    (#142)
 
 -   Discretised scales now support user-defined breaks.
 
 ## Bugfixes
 
 -   `seasonally()` result will be on the 15th of the centre month of each season instead of on the 1st. This makes the date more representative of the time span and also solves a bug in which dates on the 31st would return `NA`. This is a **potentially breaking change**.
--   `ReadNetCDF()` doesn't fail when reading variables with no dimensions (thanks to @paocorrales, \#141).
+-   `ReadNetCDF()` doesn't fail when reading variables with no dimensions (thanks to @paocorrales, #141).
 
 # metR 0.9.2
 
 ## Bugfixes
 
--   Fixes a bug in `geom_contour_tanaka()` in R \>= 4.1.0.
+-   Fixes a bug in `geom_contour_tanaka()` in R >= 4.1.0.
 
 # metR 0.9.1
 
@@ -92,7 +111,7 @@
 
 -   `geom_label_contour()` lives!
     The previous release rewrote much of the way `geom_text_contour()` worked, but I messed up and didn't realised that the new code had broken `geom_label_contour()` (to be honest, I'd almost totally forgotten about it :P).
-    (fixes \#126, thanks @kongdd)
+    (fixes #126, thanks @kongdd)
 
 # metR 0.8.0
 
@@ -140,7 +159,7 @@
 
 -   `FitLm()` accepts a `weights` argument to perform weighted regression.
 
--   `ReadNetCDF()` now can read files directly from DAP servers and other urls, and objects returned by [ncdf4::nc_open()].
+-   `ReadNetCDF()` now can read files directly from DAP servers and other urls, and objects returned by $$ncdf4::nc_open()$$.
 
 ## Bugfixes
 
@@ -168,7 +187,7 @@
 
 -   `geom_contour2()`, `geom_contour_fill()` and `geom_text_contour()` now accept a `global.breaks` argument that controls whether breaks should be computed once using the range of the whole dataset or once for every grouping (e.g. faceting).
     `TRUE` (the default) ensures that intervals between contours are comparable between panels.
-    Setting it to `FALSE` computes contours compatible with `ggplot2::geom_conotur()` (\#109, thanks @freeseek)
+    Setting it to `FALSE` computes contours compatible with `ggplot2::geom_conotur()` (#109, thanks @freeseek)
 
 ## Bugfixes
 
@@ -176,9 +195,9 @@
 
 -   `ReadNetCDF()` will not fail if the first variable was called "v" (yeah, I know.. weird error related to data.table's non standard evaluation).
 
--   Subsets in `ReadNetCDF()` won't fail if no element is named (\#107, thanks @m-saenger)
+-   Subsets in `ReadNetCDF()` won't fail if no element is named (#107, thanks @m-saenger)
 
--   Fixed bug in `WaveFlux()` (\#110, thanks @salvatirehbein)
+-   Fixed bug in `WaveFlux()` (#110, thanks @salvatirehbein)
 
 ## Internals
 
@@ -201,11 +220,11 @@
 
 ## Bugfixes
 
--   `geom_contour_fill()` imputation method is fixed for some special cases (\#96; thanks @bergmul).
+-   `geom_contour_fill()` imputation method is fixed for some special cases (#96; thanks @bergmul).
 
 -   `predict.eof()` handles complex value svd correctly.
 
--   Accommodates new grid implementation of units (\#105 thanks @pmur002).
+-   Accommodates new grid implementation of units (#105 thanks @pmur002).
 
 # metR 0.4.0 - Cumulonimbus
 
@@ -238,7 +257,7 @@
 
 -   `ReadNetCDF()` now accepts dates as elements for `subset`.
 
--   `ReadNetCDF()` will read all dates correctly (\#91; thanks to @m-saenger).
+-   `ReadNetCDF()` will read all dates correctly (#91; thanks to @m-saenger).
 
 ## Breaking changes
 
@@ -246,7 +265,7 @@
     Sorry, thermodynamics is not my forte!
     (thanks @PaoCorrales)
 
--   Arrow heads in `geom_arrow()` are now scaled correctly in faceted plots (fixes, \#92; thanks to @m-saenger)
+-   Arrow heads in `geom_arrow()` are now scaled correctly in faceted plots (fixes, #92; thanks to @m-saenger)
 
 # metR 0.2.0
 
