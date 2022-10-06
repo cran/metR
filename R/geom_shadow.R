@@ -103,7 +103,7 @@ GeomShadow <- ggplot2::ggproto("GeomShadow", ggplot2::GeomTile,
 )
 
 
-.cast_shadow <- memoise::memoise(function(coords, skip) {
+.cast_shadow <- function(coords, skip) {
     coords[, z1 := scales::rescale(z)]
 
     m <- data.table::dcast(coords, x ~ y, value.var = "z1")
@@ -113,7 +113,7 @@ GeomShadow <- ggplot2::ggproto("GeomShadow", ggplot2::GeomTile,
     coords[, alpha := .shadow(x, y, m, xdim, ydim, sun.angle, sun.altitude),
            by = .(x, y)]
     return(coords$alpha)
-})
+}
 
 .shadow <- function(x, y, m, xdim, ydim, azimuth, altitude) {
     rx <- range(xdim)
@@ -145,7 +145,7 @@ GeomShadow <- ggplot2::ggproto("GeomShadow", ggplot2::GeomTile,
     xs <- xs[keep]
 
     z.interpol <- function(x, y, m) {
-        fields::interp.surface(list(x = xdim, y = ydim, z = m),
+        interpolate_locations(list(x = xdim, y = ydim, z = m),
                                matrix(c(x, y), ncol = 2))
     }
 

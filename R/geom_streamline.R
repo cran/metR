@@ -291,7 +291,6 @@ GeomStreamline <- ggplot2::ggproto("GeomStreamline", ggplot2::GeomPath,
           messagef("%s: Each group consists of only one observation.\nDo you need to adjust the group aesthetic?", "geom_path")
       }
 
-      # browser()
       # must be sorted on group
       data <- data[order(data$group), , drop = FALSE]
       munched <- ggplot2::coord_munch(coord, data, panel_params)
@@ -378,7 +377,7 @@ GeomStreamline <- ggplot2::ggproto("GeomStreamline", ggplot2::GeomPath,
 
 #' @importFrom stats rnorm
 #' @importFrom data.table %between%
-streamline <- function(field, dt = 0.1, S = 3, skip.x = 1, skip.y = 1, nx = NULL,
+streamline.f <- function(field, dt = 0.1, S = 3, skip.x = 1, skip.y = 1, nx = NULL,
                        ny = NULL, jitter.x = 1, jitter.y = 1, xwrap = NULL,
                        ywrap = NULL) {
     field <- data.table::copy(data.table::as.data.table(field))
@@ -418,8 +417,8 @@ streamline <- function(field, dt = 0.1, S = 3, skip.x = 1, skip.y = 1, nx = NULL
         X[, 1] <- .fold(X[, 1], 1, range.x, circ.x)[[1]]
         X[, 2] <- .fold(X[, 2], 1, range.y, circ.y)[[1]]
 
-        dx <- fields::interp.surface(dx.field, X)
-        dy <- fields::interp.surface(dy.field, X)
+        dx <- interpolate_locations(dx.field, X)
+        dy <- interpolate_locations(dy.field, X)
         return(cbind(dx = dx, dy = dy))
     }
 
@@ -441,12 +440,11 @@ streamline <- function(field, dt = 0.1, S = 3, skip.x = 1, skip.y = 1, nx = NULL
         points <- data.table::as.data.table(expand.grid(x = xs, y = ys))
     }
 
-
     set.seed(42)
     points[, x := x + rnorm(.N, 0, rx)*jitter.x]
     points[, y := y + rnorm(.N, 0, ry)*jitter.y]
 
-    points[, group := 1:.N]
+    points[, group := interaction(1:.N, field$group[1])]
     points[, piece := 1]
     points[, step := 0]
     points[, end := FALSE]
@@ -509,7 +507,6 @@ streamline <- function(field, dt = 0.1, S = 3, skip.x = 1, skip.y = 1, nx = NULL
     range.select <- function(sign, range) {
         ifelse(sign == 1, range[2], range[1])
     }
-    # browser()
     points[, step2 := step]
     if (circ.x == TRUE) {
         points <- points[, .approx_order(x, y, range.x), by = group]
@@ -527,7 +524,6 @@ streamline <- function(field, dt = 0.1, S = 3, skip.x = 1, skip.y = 1, nx = NULL
         points[, step := seq_along(y), by = group]
         points[, y := .fold(y, 1, range.y, circ.y)[[1]]]
     }
-    # browser()
 
     # Me fijo si ese piece tiene el final.
     # Esto luego va al geom que decide si ponerle flecha o no.
@@ -562,8 +558,6 @@ streamline <- function(field, dt = 0.1, S = 3, skip.x = 1, skip.y = 1, nx = NULL
 }
 
 
-
-streamline.f <- memoise::memoise(streamline)
 #
 # xbk <- x
 # ybk <- y

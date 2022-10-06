@@ -59,6 +59,7 @@ stat_contour2 <- function(mapping = NULL, data = NULL,
 StatContour2 <- ggplot2::ggproto("StatContour2", ggplot2::Stat,
   required_aes = c("x", "y", "z"),
   default_aes = ggplot2::aes(order = ..level..),
+  dropped_aes = "z",
   setup_params = function(data, params) {
     if (is.null(params$global) || isTRUE(params$global.breaks)) {
       params$breaks <- setup_breaks(data,
@@ -125,7 +126,7 @@ StatContour2 <- ggplot2::ggproto("StatContour2", ggplot2::Stat,
       }
     }
 
-    data <- .impute_data.m(data, na.fill)
+    data <- .impute_data(data, na.fill)
 
 
     if (kriging) {
@@ -161,7 +162,7 @@ StatContour2 <- ggplot2::ggproto("StatContour2", ggplot2::Stat,
     # contours[, start := 1:.N %in% 1 , by = .(piece, group)]
     # contours <- contours[, unique(.SD), by = .(group, piece)]
     # contours[, start := NULL]
-    contours <- .order_contour.m(contours, data.table::setDT(data))
+    contours <- .order_contour(contours, data.table::setDT(data))
 
     if (!is.null(proj)) {
       if (is.function(proj)) {
@@ -248,7 +249,6 @@ StatContour2 <- ggplot2::ggproto("StatContour2", ggplot2::Stat,
     return(contours)
 }
 
-.order_contour.m <- memoise::memoise(.order_contour)
 
 .second <- function(x, target) {
     tmp <- (x - target)
@@ -346,6 +346,7 @@ setup_breaks <- function(data, breaks, bins, binwidth) {
 #' @export
 StatTextContour <- ggplot2::ggproto("StatTextContour", StatContour2,
   required_aes = c("x", "y", "z"),
-  default_aes = ggplot2::aes(order = ..level.., label = ..level..)
+  default_aes = ggplot2::aes(order = ..level.., label = ..level..),
+  dropped_aes = "z"
 )
 

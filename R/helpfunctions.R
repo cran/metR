@@ -37,7 +37,6 @@ messagef = function(fmt, ..., appendLF = TRUE, domain = "R-metR") {
 
 
 .tidy2matrix <- function(data, formula, value.var, fill = NULL, ...) {
-    # browser()
     row.vars <- all.vars(formula[[2]])
     col.vars <- all.vars(formula[[3]])
     data <- data.table::as.data.table(data)
@@ -303,18 +302,6 @@ checkDateish <- function(x, ...) {
 assertDateish <- checkmate::makeAssertionFunction(checkDateish)
 
 
-checkURLFile <- function(x) {
-    access <- unname(file.access(x, 4) == 0 | RCurl::url.exists(x))
-
-    if (isFALSE(access)) {
-        return("File or URL not readable")
-    }
-    return(access)
-}
-
-assertURLFile <- checkmate::makeAssertionFunction(checkURLFile)
-
-
 check_packages <- function(packages, fun) {
     installed <- vapply(packages, function(p) {
         requireNamespace(p, quietly = TRUE)
@@ -333,30 +320,31 @@ check_packages <- function(packages, fun) {
 a <- 6371000
 
 
-smooth2d <- function(x, y, value, kx = 1, ky = 1) {
-    data <- data.table::data.table(x, y, value)
-    # browser()
-    g <- .tidy2matrix(data, x ~ y, value.var = "value")
-
-    f <- fft(g$matrix)
-    f1 <- f
-
-    kx <- c(0, seq_len(floor(nrow(f)/2*kx)))
-    kx <- c(kx + 1, nrow(f) - kx[kx != 0] + 1)
-
-    ky <- c(0, seq_len(floor(ncol(f)/2*ky)))
-    ky <- c(ky + 1, ncol(f) - ky[ky != 0] + 1)
-
-    f1[, -ky] <- 0
-    f1[-kx, ] <- 0
-
-    c(Re(fft(f1, inverse = TRUE)/length(f1)))
+# from fields::interp.surface
+interpolate_locations <- function (obj, loc) {
+    x <- obj$x
+    y <- obj$y
+    z <- obj$z
+    nx <- length(x)
+    ny <- length(y)
+    lx <- approx(x, 1:nx, loc[, 1])$y
+    ly <- approx(y, 1:ny, loc[, 2])$y
+    lx1 <- floor(lx)
+    ly1 <- floor(ly)
+    ex <- lx - lx1
+    ey <- ly - ly1
+    ex[lx1 == nx] <- 1
+    ey[ly1 == ny] <- 1
+    lx1[lx1 == nx] <- nx - 1
+    ly1[ly1 == ny] <- ny - 1
+    return(z[cbind(lx1, ly1)] * (1 - ex) * (1 - ey) + z[cbind(lx1 +
+                                                                  1, ly1)] * ex * (1 - ey) + z[cbind(lx1, ly1 + 1)] *
+               (1 - ex) * ey + z[cbind(lx1 + 1, ly1 + 1)] * ex * ey)
 }
 
 
 downsample <- function(x, y, value, byx = 1, byy = 1, fill = mean) {
     data <- data.table::data.table(x, y, value)
-    browser()
     fill <- mean(value, na.rm = TRUE)
     g <- .tidy2matrix(data, x ~ y, value.var = "value", fill = fill)
     g$matrix[is.na(g$matrix)] <- fill

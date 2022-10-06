@@ -135,18 +135,16 @@
 #'
 #' }
 #' @export
-#' @importFrom lubridate years weeks days hours minutes seconds milliseconds ymd_hms
 ReadNetCDF <- function(file, vars = NULL,
                        out = c("data.frame", "vector", "array"),
                        subset = NULL, key = FALSE) {
-    check_packages(c("ncdf4", "udunits2", "PCICt"), "ReadNetCDF")
+    check_packages(c("ncdf4", "PCICt"), "ReadNetCDF")
 
     out <- out[1]
     checks <- makeAssertCollection()
 
     if (!inherits(file, "ncdf4")) {
         assertCharacter(file, len = 1, min.chars = 1, any.missing = FALSE, add = checks)
-        assertURLFile(file, add = checks)
     }
 
     # assertCharacter(vars, null.ok = TRUE, any.missing = FALSE, unique = TRUE,
@@ -159,7 +157,11 @@ ReadNetCDF <- function(file, vars = NULL,
     reportAssertions(checks)
 
     if (!inherits(file, "ncdf4")) {
-        ncfile <- ncdf4::nc_open(file)
+        utils::capture.output(ncfile <- try(ncdf4::nc_open(file), silent = TRUE))
+        if (inherits(ncfile, "try-error")) {
+            ncfile <- strsplit(ncfile, "\n", fixed = TRUE)[[1]][2]
+            stop(ncfile)
+        }
         on.exit({
             ncdf4::nc_close(ncfile)
         })
@@ -346,25 +348,36 @@ ReadNetCDF <- function(file, vars = NULL,
     return(nc.df[][])
 }
 
+
+
+time_units_factor <- c("days" = 24*3600,
+                       "hours" = 3600,
+                       "minutes" = 60,
+                       "seconds" = 1,
+                       "milliseconds" = 1/1000)
+
+
 .parse_time <- function(time, units, calendar = NULL) {
     has_since <- grepl("since", units)
     if (!has_since) {
         return(time)
     }
+    # For all I know this could fail to actually get the origin.
+    # Is there a more elegant way of extracting the origin?
+    origin <- trimws(strsplit(units, "since")[[1]][2])
+    time_unit <- trimws(strsplit(units, "since")[[1]])[1]
+
+    if (!(time_unit %in% names(time_units_factor))) {
+        warning(sprintf(gettext("time unit has unrecognised units: %s. Not parsing", domain = "R-metR"), time_unit))
+        return(time)
+    }
+
 
     if (!is.null(calendar)) {
-        # For all I know this could fail to actually get the origin.
-        # Is there a more elegant way of extracting the origin?
-        origin <- trimws(strsplit(units, "since")[[1]][2])
-        time <- udunits2::ud.convert(time,
-                                     units,
-                                     paste0("seconds since ", origin))
-        time <- as.POSIXct(PCICt::as.PCICt(time, cal = calendar, origin = origin),
-                           cal = "standard", tz = "UTC", origin = "1970-01-01 00:00:00")
+        time <- as.POSIXct(PCICt::as.PCICt(time*time_units_factor[time_unit], cal = calendar, origin = origin),
+                           cal = "standard", tz = "UTC", origin = origin)
     } else {
-        time <- udunits2::ud.convert(time, units,
-                                     "seconds since 1970-01-01 00:00:00")
-        time <- as.POSIXct(time, tz = "UTC", origin = "1970-01-01 00:00:00")
+        time <- as.POSIXct(origin, tz = "UTC") + time*time_units_factor[time_unit]
     }
 
     return(time)
@@ -454,7 +467,6 @@ print.nc_glance <- function(x, ...) {
 
 #' @export
 print.ncvar4 <- function(x, ...) {
-    # browser()
     cat(x$name, ":\n", sep = "")
     cat("    ", x$longname, sep = "")
 

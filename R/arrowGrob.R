@@ -1,4 +1,3 @@
-#' @importFrom grid grob
 arrowGrob <- function(x, y, angle, length, pivot, default.units = "npc", ...) {
     # angle en grados matemático 0 a 360
     # length en alguna unidad.
@@ -12,7 +11,6 @@ arrowGrob <- function(x, y, angle, length, pivot, default.units = "npc", ...) {
 #' @export
 #' @importFrom grid makeContent
 makeContent.arrow2 <- function(x) {
-# browser()
     x$id <- rep(seq(length(x$x)), 2)
     x$x <- grid::convertX(x$x, 'mm')
     x$y <- grid::convertY(x$y, 'mm')
@@ -31,7 +29,6 @@ makeContent.arrow2 <- function(x) {
     x
 }
 
-fast.unit.c <- memoise::memoise(grid::unit.c)
 # fast.unit.c <- grid::unit.c
 
 # fast.unit.c <- function(...) {
