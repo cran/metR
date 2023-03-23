@@ -18,27 +18,22 @@
 #' # Make a sea-land mask
 #' mask <- temperature[lev == 1000, .(lon = lon, lat = lat, land = MaskLand(lon, lat))]
 #' temperature <- temperature[mask, on = c("lon", "lat")]
+#' library(ggplot2)
+#'
+#' ggplot(mask, aes(lon, lat)) +
+#'    geom_raster(aes(fill = land))
 #'
 #' # Take the temperature difference between land and ocean
 #' diftemp <- temperature[,
 #'           .(tempdif = mean(air[land == TRUE]) - mean(air[land == FALSE])),
 #'            by = .(lat, lev)]
-#' library(ggplot2)
+#'
 #' ggplot(diftemp, aes(lat, lev)) +
-#'     geom_contour(aes(z = tempdif, color = ..level..)) +
+#'     geom_contour(aes(z = tempdif, color = after_stat(level))) +
 #'     scale_y_level() +
 #'     scale_x_latitude() +
 #'     scale_color_divergent()
 #'
-#' # Mean temperature in the USA
-#' usatemp <- temperature[, usa := MaskLand(lon, lat, mask = "usa")][
-#'     , .(air = weighted.mean(air, cos(lat*pi/180))), by = .(usa, lev)][
-#'         usa == TRUE]
-#'
-#' ggplot(usatemp, aes(lev, air)) +
-#'     geom_line() +
-#'     scale_x_level() +
-#'     coord_flip()
 #'
 #' @export
 MaskLand <- function(lon, lat, mask = "world", wrap = c(0, 360)) {
@@ -49,20 +44,27 @@ MaskLand <- function(lon, lat, mask = "world", wrap = c(0, 360)) {
     assertNumeric(wrap, len = 2, add = checks)
     reportAssertions(checks)
 
-    check_packages(c("maps", "maptools"), "MaskLand")
+    check_packages(c("maps"), "MaskLand")
 
     seamask <- maps::map(paste0("maps::", mask), fill = TRUE, col = "transparent",
                          plot = FALSE, wrap = wrap)
-    IDs <- vapply(strsplit(seamask$names, ":"), function(x) x[1], "")
-    proj <- sp::CRS("+proj=longlat +datum=WGS84")
-    seamask <- maptools::map2SpatialPolygons(seamask, IDs = IDs, proj4string = proj)
+    proj <- "+proj=longlat +datum=WGS84 +over"
+
+    seamask <- sf::st_as_sf(seamask, fill = TRUE, crs = proj)
+    seamask <- sf::st_make_valid(seamask)
 
     field <- data.table::data.table(lon, lat)
     field.unique <- unique(field)
 
-    points <- sp::SpatialPoints(field.unique, proj4string = proj)
-    field.unique[, land := unname(!is.na(sp::over(points, seamask)))]
-    field.unique[!((lat %between% c(-90, 90)) & (lon %between% wrap)), land := NA]
+    points <- sf::st_as_sf(field.unique, coords = c("lon", "lat"),
+                           crs = proj)
+
+    points <- suppressWarnings(sf::st_make_valid(points))
+
+    points <-  sf::st_transform(points, sf::st_crs(seamask))
+    field.unique[, land := lengths(suppressWarnings(sf::st_covered_by(points, seamask))) > 0]
+
+    field.unique[!(lat %between% c(-90, 90)), land := NA]
 
     field <- field.unique[, .(lon, lat, land)][field, on = c("lon", "lat")]
 

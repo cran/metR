@@ -40,30 +40,32 @@
 #'}
 #'
 #' @examples
+#' \dontshow{data.table::setDTthreads(1)}
+#'
 #' library(ggplot2)
 #'
 #' # Breaks can be a function.
 #' ggplot(reshape2::melt(volcano), aes(Var1, Var2)) +
-#'     geom_contour2(aes(z = value, color = ..level..),
+#'     geom_contour2(aes(z = value, color = after_stat(level)),
 #'                   breaks = AnchorBreaks(130, binwidth = 10))
 #'
 #' # Add labels by supplying the label aes.
 #' ggplot(reshape2::melt(volcano), aes(Var1, Var2)) +
-#'     geom_contour2(aes(z = value, label = ..level..))
+#'     geom_contour2(aes(z = value, label = after_stat(level)))
 #'
 #' ggplot(reshape2::melt(volcano), aes(Var1, Var2)) +
-#'     geom_contour2(aes(z = value, label = ..level..),
+#'     geom_contour2(aes(z = value, label = after_stat(level)),
 #'                   skip = 0)
 #'
 #' # Use label.placer to control where contours are labelled.
 #' ggplot(reshape2::melt(volcano), aes(Var1, Var2)) +
-#'     geom_contour2(aes(z = value, label = ..level..),
+#'     geom_contour2(aes(z = value, label = after_stat(level)),
 #'                       label.placer = label_placer_n(n = 2))
 #'
 #' # Use the rot_adjuster argument of the placer function to
 #' # control the angle. For example, to fix it to some angle:
 #' ggplot(reshape2::melt(volcano), aes(Var1, Var2)) +
-#'     geom_contour2(aes(z = value, label = ..level..),
+#'     geom_contour2(aes(z = value, label = after_stat(level)),
 #'                   skip = 0,
 #'                   label.placer = label_placer_flattest(rot_adjuster = 0))
 #'
@@ -121,10 +123,12 @@ geom_contour2 <- function(mapping = NULL, data = NULL,
 #' @format NULL
 #' @export
 GeomContour2 <- ggplot2::ggproto("GeomContour2", ggplot2::GeomContour,
-  default_aes = ggplot2::aes(weight = 1, colour = "black", size = 0.5, linetype = 1,
+  default_aes = ggplot2::aes(weight = 1, colour = "black", linewidth = 0.5, linetype = 1,
                              alpha = NA, label = NULL, label_colour = NULL,
                              label_alpha = NULL, label_size = 3.88,
                              family = "", fontface = 1),
+  rename_size = TRUE,
+  non_missing_aes = "size",
   draw_panel = function(data, panel_params, coord, arrow = NULL, lineend = "butt",
                         linejoin = "round", linemitre = 10, na.rm = FALSE,
                         skip = 1, margin = grid::unit(c(1, 1, 1, 1), "pt"),
@@ -138,6 +142,7 @@ GeomContour2 <- ggplot2::ggproto("GeomContour2", ggplot2::GeomContour,
       lines <- .contours_to_isolines(munched)
       colour <- .extract_attr(munched, "colour")
       size <- .extract_attr(munched, "size")
+      linewidth <- .extract_attr(munched, "linewidth")
       linetype <- .extract_attr(munched, "linetype")
       alpha <- .extract_attr(munched, "alpha")
       alpha[is.na(alpha)] <- 1
@@ -180,7 +185,7 @@ GeomContour2 <- ggplot2::ggproto("GeomContour2", ggplot2::GeomContour,
           fontfamily = family,
           fontface = fontface,
           fontsize = label_size*.pt,
-          lwd = size*.pt,
+          lwd = (linewidth %||% size) * .pt,
           col = colour,
           lty = linetype,
           alpha = alpha

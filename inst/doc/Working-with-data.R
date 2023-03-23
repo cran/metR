@@ -22,14 +22,14 @@ air <- ReadNetCDF(file, subset = list(lat = 90:0, level = 925))
 
 
 ggplot(air, aes(lon, lat)) +
-  geom_contour2(aes(z = air, color = ..level..))
+  geom_contour2(aes(z = air, color = after_stat(level)))
 
 ## -----------------------------------------------------------------------------
 air[, air2 := ReadNetCDF(file, out = "vector",
                          subset = list(lat = 90:0, level = 300))]
 
 ggplot(air, aes(lon, lat)) +
-  geom_contour2(aes(z = air2, color = ..level..))
+  geom_contour2(aes(z = air2, color = after_stat(level)))
 
 ## -----------------------------------------------------------------------------
 # Not run because it needs internet access

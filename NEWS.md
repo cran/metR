@@ -1,3 +1,15 @@
+# metR 0.14.0
+
+## New Features
+
+-   Not really a new feature per se, but all geoms now support the new linewidth aesthetic. `geom_relief()` and `geom_shadow()` now don't have a size aesthetic, since they shouldn't have had it anyway.
+-   The value of the maximum vector magnitude in `scale_mag()` is now chosen to be a "pretty" number close to the maximum. This will prevent guides with many unnecesary decimal places (thanks, @PanfengZhang #161).
+
+## Bug Fixes
+
+-   Documents the correct default `expand` value in `sale_x_longitude()` and friends (thanks, @tamas-ferenci, #167).
+-   Fixes inconsistencies in generic methods.
+
 # metR 0.13.0
 
 ## New features
@@ -48,7 +60,7 @@
     This is finally proper labelling support without having to use a different geom (`geom_text_contour()`).
     Thanks to the isoband package for this.
 
--   Following [isoband's naming convention](https://wilkelab.org/isoband/reference/label_placer.html), the family of functions that decide where to place labels has been renamed as `label_placer_` and the corresponding argument is now `label.placer` .
+-   Following [isoband's naming convention](https://isoband.r-lib.org/reference/label_placer.html), the family of functions that decide where to place labels has been renamed as `label_placer_` and the corresponding argument is now `label.placer` .
     The `label_placement_` family of functions will be deprecated in future releases.
 
 # metR 0.10.0
@@ -120,7 +132,7 @@
 
 -   `AnchorBreaks()` gains a `bins` argument to mimic the default functionality of `MakeBreaks()`.
 
--   New `label_placement_minmax()` to label contours at the maximum and minimum points of a contour (mimicking [isoband's behaviour](https://wilkelab.org/isoband/articles/isoband3.html))
+-   New `label_placement_minmax()` to label contours at the maximum and minimum points of a contour (mimicking [isoband's behaviour](https://isoband.r-lib.org/articles/isoband3.html))
 
 -   `geom_contour_tanaka()` now has a (rather experimental) argument `smooth` which allows to smooth the transition between segments.
 

@@ -80,11 +80,11 @@ ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
     geom_contour_fill()
 
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
-    geom_contour_fill(aes(fill = stat(level)))
+    geom_contour_fill(aes(fill = after_stat(level)))
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
-    geom_contour_fill(aes(fill = stat(level_d)))
+    geom_contour_fill(aes(fill = after_stat(level_d)))
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
@@ -162,8 +162,9 @@ g + coord_polar()
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 500], aes(lon, lat)) +
-    geom_streamline(aes(dx = t.dy, dy = -t.dx, size = ..step.., alpha = ..step..,
-                        color = sqrt(..dx..^2 + ..dy..^2)), arrow = NULL,
+    geom_streamline(aes(dx = t.dy, dy = -t.dx, size = after_stat(step), 
+                        alpha = after_stat(step),
+                        color = after_stat(sqrt(dx^2 + dy^2))), arrow = NULL,
                     L = 10, res = 2, xwrap = c(0, 360), lineend = "round") + 
     scale_color_viridis_c(guide = "none") +
     scale_size(range = c(0, 1), guide = "none") +
@@ -171,23 +172,23 @@ ggplot(temperature[lev == 500], aes(lon, lat)) +
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
-    geom_contour_fill(aes(fill = stat(level)), breaks = c(-10, -8, -6, -2, -1, 0, 6, 8, 10)) +
+    geom_contour_fill(aes(fill = after_stat(level)), breaks = c(-10, -8, -6, -2, -1, 0, 6, 8, 10)) +
   guides(fill = guide_colorsteps())
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
-  geom_contour_fill(aes(fill = stat(level)), breaks = c(-10, -8, -6, -2, -1, 0, 6, 8, 10)) +
+  geom_contour_fill(aes(fill = after_stat(level)), breaks = c(-10, -8, -6, -2, -1, 0, 6, 8, 10)) +
   scale_fill_discretised()
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
-  geom_contour_fill(aes(fill = stat(level)), breaks = c(-10, -8, -6, -2, -1, 0, 6, 8, 10)) +
+  geom_contour_fill(aes(fill = after_stat(level)), breaks = c(-10, -8, -6, -2, -1, 0, 6, 8, 10)) +
   scale_fill_divergent_discretised(midpoint = 3)
 
 ## ---- message = FALSE---------------------------------------------------------
 # Plot made with base ggplot
 (g <- ggplot(temperature[lon %~% 180], aes(lat, lev, z = air.z)) +
-        geom_contour2(aes(color = ..level..)))
+        geom_contour2(aes(color = after_stat(level))))
 
 ## -----------------------------------------------------------------------------
 g + 

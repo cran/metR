@@ -22,11 +22,11 @@ test_that("Water is still water", {
     expect_equal(MaskLand(-58, -34, wrap = c(-180, 180)), TRUE)
 })
 
+
 test_that("MaskLand respects boundaries", {
-    expect_equal(MaskLand(361, 15), NA)
+    expect_equal(MaskLand(361, 15), MaskLand(1, 15))
     expect_equal(MaskLand(0, -91), NA)
     expect_equal(MaskLand(0, 91), NA)
-    expect_equal(MaskLand(360-58, 90, wrap = c(-180, 180)), NA)
 })
 
 test_that("MaskLand respects order", {

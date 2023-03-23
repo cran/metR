@@ -90,11 +90,12 @@
 #'     geom_streamline(aes(dx = u, dy = v), L = 50)
 #'
 #' # The step variable can be mapped to size or alpha to
-#' # get cute "drops". It's important to note that ..dx.. (the calculated variable)
+#' # get cute "drops". It's important to note that after_stat(dx) (the calculated variable)
 #' # is NOT the same as dx (from the data).
 #' ggplot(geopotential, aes(lon, lat)) +
-#'     geom_streamline(aes(dx = dlon(u, lat), dy = dlat(v), alpha = ..step..,
-#'                         color = sqrt(..dx..^2 + ..dy..^2), size = ..step..),
+#'     geom_streamline(aes(dx = dlon(u, lat), dy = dlat(v), alpha = after_stat(step),
+#'                         color = sqrt(after_stat(dx^2) + after_stat(dy^2)),
+#'                         size = after_stat(step)),
 #'                         L = 40, xwrap = c(0, 360), res = 2, arrow = NULL,
 #'                         lineend = "round") +
 #'     scale_size(range = c(0, 0.6))
@@ -283,7 +284,9 @@ StatStreamline <- ggplot2::ggproto("StatStreamline", ggplot2::Stat,
 #' @format NULL
 #' @export
 GeomStreamline <- ggplot2::ggproto("GeomStreamline", ggplot2::GeomPath,
-  default_aes = ggplot2::aes(colour = "black", size = 0.5, linetype = 1, alpha = NA),
+  default_aes = ggplot2::aes(colour = "black", linewidth = 0.5, linetype = 1, alpha = NA),
+  rename_size = TRUE,
+  non_missing_aes = "size",
   draw_panel = function(data, panel_params, coord, arrow = NULL,
                         lineend = "butt", linejoin = "round", linemitre = 1,
                         na.rm = FALSE) {
@@ -295,6 +298,11 @@ GeomStreamline <- ggplot2::ggproto("GeomStreamline", ggplot2::GeomPath,
       data <- data[order(data$group), , drop = FALSE]
       munched <- ggplot2::coord_munch(coord, data, panel_params)
 
+      # For older versions of ggplot2
+      if (is.null(data$linewidth)) {
+          data$linewidth <- data$size
+      }
+
       # Silently drop lines with less than two points, preserving order
       rows <- stats::ave(seq_len(nrow(munched)), munched$group, FUN = length)
       munched <- munched[rows >= 2, ]
@@ -305,13 +313,13 @@ GeomStreamline <- ggplot2::ggproto("GeomStreamline", ggplot2::GeomPath,
           linetype <- unique(df$linetype)
           data.frame(
               solid = identical(linetype, 1) || identical(linetype, "solid"),
-              constant = nrow(unique(df[, c("alpha", "colour","size", "linetype")])) == 1
+              constant = nrow(unique(df[, c("alpha", "colour", "linewidth", "linetype")])) == 1
           )
       })
       solid_lines <- all(attr$solid)
       constant <- all(attr$constant)
       if (!solid_lines && !constant) {
-        stopf("%s: If you are using dotted or dashed lines, colour, size and linetype must be constant over the line.",
+        stopf("%s: If you are using dotted or dashed lines, colour, linewidth and linetype must be constant over the line.",
                       "geom_streamline", call. = FALSE)
       }
 
@@ -338,7 +346,7 @@ GeomStreamline <- ggplot2::ggproto("GeomStreamline", ggplot2::GeomPath,
               gp = grid::gpar(
                   col = scales::alpha(munched$colour, munched$alpha)[!end],
                   fill = scales::alpha(munched$colour, munched$alpha)[!end],
-                  lwd = munched$size[!end] * .pt,
+                  lwd = munched$linewidth[!end] * .pt,
                   lty = munched$linetype[!end],
                   lineend = lineend,
                   linejoin = linejoin,
@@ -363,7 +371,7 @@ GeomStreamline <- ggplot2::ggproto("GeomStreamline", ggplot2::GeomPath,
               gp = grid::gpar(
                   col = scales::alpha(munched$colour, munched$alpha)[start],
                   fill = scales::alpha(munched$colour, munched$alpha)[start],
-                  lwd = munched$size[start] * .pt,
+                  lwd = munched$linewidth[start] * .pt,
                   lty = munched$linetype[start],
                   lineend = lineend,
                   linejoin = linejoin,

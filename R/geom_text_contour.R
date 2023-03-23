@@ -19,6 +19,7 @@
 #' this is not the case with `geom_label_contour()`.
 #'
 #' @examples
+#' \dontshow{data.table::setDTthreads(1)}
 #' library(ggplot2)
 #' v <- reshape2::melt(volcano)
 #' g <- ggplot(v, aes(Var1, Var2)) +
@@ -29,7 +30,7 @@
 #'
 #' g + geom_text_contour(aes(z = value), stroke = 0.2, stroke.colour = "red")
 #'
-#' g + geom_text_contour(aes(z = value, stroke.colour = ..level..), stroke = 0.2) +
+#' g + geom_text_contour(aes(z = value, stroke.colour = after_stat(level)), stroke = 0.2) +
 #'     scale_colour_gradient(aesthetics = "stroke.colour", guide = "none")
 #'
 #' g + geom_text_contour(aes(z = value), rotate = FALSE)

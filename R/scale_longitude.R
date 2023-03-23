@@ -6,6 +6,12 @@
 #' helpful defaults for plotting longitude, latitude and pressure levels.
 #'
 #' @inheritParams ggplot2::scale_x_continuous
+#' @param expand For position scales, a vector of range expansion
+#' constants used to add some padding around the data to ensure
+#' that they are placed some distance away from the axes.
+#' Use the convenience function [ggplot2::expansion()] to generate
+#' the values for the expand argument.
+#'
 #' @param ticks spacing between breaks
 #'
 #'
@@ -18,7 +24,7 @@
 #'     geom_contour() +
 #'     scale_x_longitude() +
 #'     scale_y_latitude()
-#' 
+#'
 #' data(temperature)
 #' ggplot(temperature[lon == lon[1] & lat == lat[1]], aes(air, lev)) +
 #'     geom_path() +
@@ -79,7 +85,7 @@ scale_y_latitude <- function(name = "", ticks = 30,
 
 #' @rdname scale_longitude
 #' @export
-scale_x_level <- function(name = "", expand = c(0, 0), trans = "sa_height", ...) {
+scale_x_level <- function(name = "", expand = c(0, 0), trans = "reverselog", ...) {
     ggplot2::scale_x_continuous(name = name, expand = expand,
                        trans = trans,
                        ...)
@@ -87,7 +93,7 @@ scale_x_level <- function(name = "", expand = c(0, 0), trans = "sa_height", ...)
 
 #' @rdname scale_longitude
 #' @export
-scale_y_level <- function(name = "", expand = c(0, 0), trans = "sa_height", ...) {
+scale_y_level <- function(name = "", expand = c(0, 0), trans = "reverselog", ...) {
     ggplot2::scale_y_continuous(name = name, expand = expand,
                        trans = trans,
                        ...)

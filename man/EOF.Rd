@@ -88,8 +88,9 @@ The bootstrapping procedure follows Fisher et.al. (2016) and returns the
 standard deviation of each singular value.
 }
 \examples{
+\dontshow{data.table::setDTthreads(1)}
 # The Antarctic Oscillation is computed from the
-# monthly geopotential height anomalies weigthed by latitude.
+# monthly geopotential height anomalies weighted by latitude.
 library(data.table)
 data(geopotential)
 geopotential <- copy(geopotential)
@@ -109,7 +110,7 @@ aao <- cut(eof, 1)
 # AAO field
 library(ggplot2)
 ggplot(aao$left, aes(lon, lat, z = gh.t.w)) +
-    geom_contour(aes(color = ..level..)) +
+    geom_contour(aes(color = after_stat(level))) +
     coord_polar()
 
 # AAO signal
