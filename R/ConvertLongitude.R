@@ -13,7 +13,9 @@
 #' @examples
 #' library(ggplot2)
 #' library(data.table)
+#' \dontshow{data.table::setDTthreads(1)}
 #' data(geopotential)
+#'
 #' ggplot(geopotential[date == date[1]], aes(lon, lat, z = gh)) +
 #'     geom_contour(color = "black") +
 #'     geom_contour(aes(x = ConvertLongitude(lon)))

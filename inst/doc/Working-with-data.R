@@ -6,6 +6,7 @@ dev = "jpeg",
 fig.width = 7,
 cache = FALSE
 )
+data.table::setDTthreads(1)
 
 ## -----------------------------------------------------------------------------
 library(metR)

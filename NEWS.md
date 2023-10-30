@@ -1,3 +1,18 @@
+# metR 0.14.1
+
+## Breaking Changes
+
+-   The `DivideTimeseries()` function is now defunct.
+
+## New Features
+
+-   `FitLm()` gains a new `intercept` argument that allows you to remove the intercept term that is automatically added.
+
+## Bug Fixes
+
+-   Fixes error in `Laplacian()` when computing the laplacian of a single variable. (#170, Thanks @pascaloettli)
+-   Removes dependencies on raster and gdal packages.
+
 # metR 0.14.0
 
 ## New Features

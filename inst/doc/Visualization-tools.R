@@ -5,8 +5,9 @@ collapse = TRUE,
 message = FALSE,
 fig.width = 7,
 comment = "#>")
+data.table::setDTthreads(1)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 # Packages and data use throught 
 library(metR)
 library(ggplot2)
@@ -185,7 +186,7 @@ ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
   geom_contour_fill(aes(fill = after_stat(level)), breaks = c(-10, -8, -6, -2, -1, 0, 6, 8, 10)) +
   scale_fill_divergent_discretised(midpoint = 3)
 
-## ---- message = FALSE---------------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 # Plot made with base ggplot
 (g <- ggplot(temperature[lon %~% 180], aes(lat, lev, z = air.z)) +
         geom_contour2(aes(color = after_stat(level))))
