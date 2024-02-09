@@ -1,3 +1,20 @@
+# metR 0.15.0
+
+## New features
+
+-   The contour functions gain a `clip` argument to only show contours in an area defined by a polygon.
+-   The `kriging` argument of the contour functions now can be a numeric to control de number of pixels used.
+-   Documentation of `FitWave()` and friends improved (#184, @pascaloettli).
+
+## Breaking changes
+
+-   The `proj` argument in `geom_contour_fill()` and friends now operate over the isolines returned by the isoband package. This might break code that used a custom function to `proj`.
+
+## Bug Fixes
+
+-   Guides are compatible with the new versions of ggplot2 (#117 and #185, @teunbrand).
+-   Contour functions will work even if OutDec is not ".".
+
 # metR 0.14.1
 
 ## Breaking Changes
@@ -233,7 +250,8 @@
 
 -   `FitLm()` adds names to unnamed terms.
 
--   New function `WaveEnvelope()` that computes... the wave envelope.
+-   New function `WaveEnvelope()` that computes...
+    the wave envelope.
 
 -   `geom_contour2()`, `geom_contour_fill()` and `geom_text_contour()` now accept a `global.breaks` argument that controls whether breaks should be computed once using the range of the whole dataset or once for every grouping (e.g. faceting).
     `TRUE` (the default) ensures that intervals between contours are comparable between panels.

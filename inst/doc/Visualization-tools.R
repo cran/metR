@@ -1,10 +1,10 @@
 ## ----setup, include = FALSE---------------------------------------------------
 knitr::opts_chunk$set(
-  dev = "jpeg",
-collapse = TRUE,
-message = FALSE,
-fig.width = 7,
-comment = "#>")
+    dev = "jpeg",
+    collapse = TRUE,
+    message = FALSE,
+    fig.width = 7,
+    comment = "#>")
 data.table::setDTthreads(1)
 
 ## ----message = FALSE----------------------------------------------------------
@@ -17,8 +17,8 @@ temperature[, air.z := Anomaly(air), by = .(lat, lev)]
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lon %~% 180], aes(lat, lev, z = air.z)) +
-  geom_contour_fill(breaks = MakeBreaks(binwidth = 2, exclude = 0)) +
-  scale_fill_divergent(breaks = MakeBreaks(binwidth = 2, exclude = 0))
+    geom_contour_fill(breaks = MakeBreaks(binwidth = 2, exclude = 0)) +
+    scale_fill_divergent(breaks = MakeBreaks(binwidth = 2, exclude = 0))
 
 ## -----------------------------------------------------------------------------
 data(volcano)
@@ -36,19 +36,24 @@ ggplot(volcano, aes(Var1, Var2, z = value.gap)) +
 ## -----------------------------------------------------------------------------
 data(surface)
 ggplot(surface, aes(lon, lat)) +
-  geom_point(aes(color = height))
+    geom_point(aes(color = height))
 
 ggplot(surface, aes(x, y)) +
-  geom_point(aes(color = height))
+    geom_point(aes(color = height))
 
 ## -----------------------------------------------------------------------------
 proj_string <- "+proj=lcc +lat_1=-30.9659996032715 +lat_2=-30.9659996032715 +lat_0=-30.9660034179688 +lon_0=-63.5670013427734 +a=6370000 +b=6370000"
 
 ggplot(surface, aes(x, y)) +
-  geom_contour_fill(aes(z = height))
+    geom_contour_fill(aes(z = height))
 
 ggplot(surface, aes(x, y)) +
-  geom_contour_fill(aes(z = height), proj = proj_string)
+    geom_contour_fill(aes(z = height), proj = proj_string)
+
+## -----------------------------------------------------------------------------
+argentina <- rnaturalearth::ne_countries(country = "argentina", returnclass = "sf")
+ggplot(surface, aes(x, y)) +
+    geom_contour_fill(aes(z = height), proj = proj_string, clip = argentina) 
 
 ## -----------------------------------------------------------------------------
 set.seed(42)
@@ -58,23 +63,23 @@ some_volcano[, Var1 := Var1 + rnorm(.N)]    # add some random noise
 some_volcano[, Var2 := Var2 + rnorm(.N)]
 
 ggplot(some_volcano, aes(Var1, Var2)) +
-  geom_point(aes(color = value))
+    geom_point(aes(color = value))
 
 ggplot(some_volcano, aes(Var1, Var2)) +
-  geom_contour_fill(aes(z = value), kriging = TRUE) +
-  geom_point(size = 0.2)
+    geom_contour_fill(aes(z = value), kriging = TRUE) +
+    geom_point(size = 0.2)
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev %in% c(1000, 300)], aes(lon, lat, z = air.z)) +
-  geom_contour_fill() +
-  scale_fill_divergent() +
-  facet_grid(~lev)
+    geom_contour_fill() +
+    scale_fill_divergent() +
+    facet_grid(~lev)
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev %in% c(1000, 300)], aes(lon, lat, z = air.z)) +
-  geom_contour_fill(global.breaks = FALSE) +
-  scale_fill_divergent() +
-  facet_grid(~lev)
+    geom_contour_fill(global.breaks = FALSE) +
+    scale_fill_divergent() +
+    facet_grid(~lev)
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
@@ -110,9 +115,9 @@ ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
-     geom_contour_fill() +
-     geom_contour_tanaka() +
-     scale_fill_divergent()
+    geom_contour_fill() +
+    geom_contour_tanaka() +
+    scale_fill_divergent()
 
 ## -----------------------------------------------------------------------------
 data(geopotential)    # geopotential height at 700hPa for the Southern Hemisphere. 
@@ -138,10 +143,10 @@ temperature[, c("t.dx", "t.dy") := Derivate(air.z ~ lon + lat,
             by = lev]
 
 (g <- ggplot(temperature[lev == 500], aes(lon, lat)) +
-    geom_contour_fill(aes(z = air.z)) +
-    geom_vector(aes(dx = t.dx, dy = t.dy), skip.x = 2, 
-                skip.y = 1) +
-    scale_mag())
+        geom_contour_fill(aes(z = air.z)) +
+        geom_vector(aes(dx = t.dx, dy = t.dy), skip.x = 2, 
+                    skip.y = 1) +
+        scale_mag())
 
 ## -----------------------------------------------------------------------------
 g + coord_polar()
@@ -174,22 +179,22 @@ ggplot(temperature[lev == 500], aes(lon, lat)) +
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
     geom_contour_fill(aes(fill = after_stat(level)), breaks = c(-10, -8, -6, -2, -1, 0, 6, 8, 10)) +
-  guides(fill = guide_colorsteps())
+    guides(fill = guide_colorsteps())
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
-  geom_contour_fill(aes(fill = after_stat(level)), breaks = c(-10, -8, -6, -2, -1, 0, 6, 8, 10)) +
-  scale_fill_discretised()
+    geom_contour_fill(aes(fill = after_stat(level)), breaks = c(-10, -8, -6, -2, -1, 0, 6, 8, 10)) +
+    scale_fill_discretised()
 
 ## -----------------------------------------------------------------------------
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
-  geom_contour_fill(aes(fill = after_stat(level)), breaks = c(-10, -8, -6, -2, -1, 0, 6, 8, 10)) +
-  scale_fill_divergent_discretised(midpoint = 3)
+    geom_contour_fill(aes(fill = after_stat(level)), breaks = c(-10, -8, -6, -2, -1, 0, 6, 8, 10)) +
+    scale_fill_divergent_discretised(midpoint = 3)
 
 ## ----message = FALSE----------------------------------------------------------
 # Plot made with base ggplot
 (g <- ggplot(temperature[lon %~% 180], aes(lat, lev, z = air.z)) +
-        geom_contour2(aes(color = after_stat(level))))
+     geom_contour2(aes(color = after_stat(level))))
 
 ## -----------------------------------------------------------------------------
 g + 

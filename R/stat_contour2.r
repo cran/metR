@@ -8,8 +8,15 @@
 #' @param binwidth Distance between breaks.
 #' @param global.breaks Logical indicating whether `breaks` should be computed for the whole
 #' data or for each grouping.
-#' @param kriging Logical indicating whether to perform ordinary kriging before contouring.
+#' @param kriging Whether to perform ordinary kriging before contouring.
 #' Use this if you want to use contours with irregularly spaced data.
+#' If `FALSE`, no kriging is performed. If `TRUE`, kriging will be performed with
+#' 40 points. If a numeric, kriging will be performed with `kriging` points.
+#' @param proj The projection to which to project the contours to.
+#' It can be either a projection string or a function to apply to the whole
+#' contour dataset.
+#' @param clip A simple features object to be used as a clip. Contours are only
+#' drawn in the interior of this polygon.
 #'
 #' @export
 #' @section Computed variables:
@@ -24,6 +31,8 @@ stat_contour2 <- function(mapping = NULL, data = NULL,
                           breaks = MakeBreaks(),
                           bins = NULL,
                           binwidth = NULL,
+                          proj = NULL,
+                          clip = NULL,
                           kriging = FALSE,
                           global.breaks = TRUE,
                           na.rm = FALSE,
@@ -47,6 +56,8 @@ stat_contour2 <- function(mapping = NULL, data = NULL,
             binwidth = binwidth,
             global.breaks = global.breaks,
             kriging = kriging,
+            proj = proj,
+            clip = clip,
             ...
         )
     )
@@ -94,7 +105,7 @@ StatContour2 <- ggplot2::ggproto("StatContour2", ggplot2::Stat,
                            breaks = scales::fullseq, complete = TRUE,
                            na.rm = FALSE, circular = NULL, xwrap = NULL,
                            ywrap = NULL, na.fill = FALSE, global.breaks = TRUE,
-                           proj = NULL, kriging = FALSE) {
+                           proj = NULL, kriging = FALSE, clip = NULL) {
     if (isFALSE(global.breaks)) {
       breaks <- setup_breaks(data,
                              breaks = breaks,
@@ -150,9 +161,12 @@ StatContour2 <- ggplot2::ggproto("StatContour2", ggplot2::Stat,
       data <- suppressWarnings(WrapCircular(data, "y", ywrap))
     }
 
-
     data.table::setDF(data)
-    contours <- data.table::as.data.table(.contour_lines(data, breaks, complete = complete))
+    dec <- getOption("OutDec")
+    options(OutDec = ".")
+    on.exit(options(OutDec = dec))
+    contours <- data.table::as.data.table(.contour_lines(data, breaks, complete = complete, clip = clip, proj = proj))
+
 
     if (length(contours) == 0) {
       warningf("Not possible to generate contour data.", call. = FALSE)
@@ -164,20 +178,6 @@ StatContour2 <- ggplot2::ggproto("StatContour2", ggplot2::Stat,
     # contours[, start := NULL]
     contours <- .order_contour(contours, data.table::setDT(data))
 
-    if (!is.null(proj)) {
-      if (is.function(proj)) {
-        contours <- proj(contours)
-      } else {
-        if (is.character(proj)) {
-          if (!requireNamespace("proj4", quietly = TRUE)) {
-            stopf("Projection requires the proj4 package. Install it with 'install.packages(\"proj4\")'.")
-          }
-          contours <- data.table::copy(contours)[, c("x", "y") := proj4::project(list(x, y), proj,
-                                                                                 inverse = TRUE)][]
-
-        }
-      }
-    }
 
     return(contours)
   }
@@ -270,7 +270,7 @@ isoband_z_matrix <- function(data) {
   raster
 }
 
-.contour_lines <- function(data, breaks, complete = FALSE) {
+.contour_lines <- function(data, breaks, complete = FALSE, clip = NULL, proj = NULL) {
   z <- isoband_z_matrix(data)
 
   if (is.list(z)) {
@@ -287,6 +287,37 @@ isoband_z_matrix <- function(data) {
   if (length(cl) == 0) {
     warningf("Not possible to generate contour data.", call. = FALSE)
     return(data.frame())
+  }
+
+  if (!is.null(proj)) {
+      cl_class <- class(cl)
+      if (is.function(proj)) {
+          cl <- proj(cl)
+      } else {
+          if (is.character(proj)) {
+              if (!requireNamespace("proj4", quietly = TRUE)) {
+                  stopf("Projection requires the proj4 package. Install it with 'install.packages(\"proj4\")'.")
+              }
+              cl <- lapply(cl, function(x) {
+                  x[c("x", "y")] <- proj4::project(list(x$x, x$y), proj, inverse = TRUE)
+                  return(x)
+              })
+          }
+      }
+      class(cl) <- cl_class
+  }
+
+
+  if (!is.null(clip)) {
+      s2 <- suppressMessages(sf::sf_use_s2(FALSE))
+      on.exit(suppressMessages(sf::sf_use_s2(s2)))
+      clip <- suppressMessages(sf::st_union(sf::st_make_valid(clip)))
+
+      if (!is.na(sf::st_crs(clip))) {
+          sf::st_crs(clip) <- NA
+      }
+
+      cl <- clip_iso(cl, clip, "LINESTRING")
   }
 
   # Convert list of lists into single data frame

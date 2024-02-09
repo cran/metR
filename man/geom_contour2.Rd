@@ -39,6 +39,8 @@ stat_contour2(
   breaks = MakeBreaks(),
   bins = NULL,
   binwidth = NULL,
+  proj = NULL,
+  clip = NULL,
   kriging = FALSE,
   global.breaks = TRUE,
   na.rm = FALSE,
@@ -137,8 +139,17 @@ the default plot specification, e.g. \code{\link[ggplot2:borders]{borders()}}.}
 \code{ggproto} \code{Geom} subclass or as a string naming the geom stripped of the
 \code{geom_} prefix (e.g. \code{"point"} rather than \code{"geom_point"})}
 
-\item{kriging}{Logical indicating whether to perform ordinary kriging before contouring.
-Use this if you want to use contours with irregularly spaced data.}
+\item{proj}{The projection to which to project the contours to.
+It can be either a projection string or a function to apply to the whole
+contour dataset.}
+
+\item{clip}{A simple features object to be used as a clip. Contours are only
+drawn in the interior of this polygon.}
+
+\item{kriging}{Whether to perform ordinary kriging before contouring.
+Use this if you want to use contours with irregularly spaced data.
+If \code{FALSE}, no kriging is performed. If \code{TRUE}, kriging will be performed with
+40 points. If a numeric, kriging will be performed with \code{kriging} points.}
 }
 \description{
 Similar to \link[ggplot2:geom_contour]{ggplot2::geom_contour} but it can label contour lines,
