@@ -3,13 +3,16 @@
 
 # metR <img src="man/figures/logo.png" align="right"/>
 
-[![R build
-status](https://github.com/eliocamp/metR/workflows/R-CMD-check/badge.svg)](https://github.com/eliocamp/metR/actions)
+<!-- badges: start -->
+
+[![R-CMD-check](https://github.com/eliocamp/metR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/eliocamp/metR/actions/workflows/R-CMD-check.yaml)
 [![Coverage
 status](https://codecov.io/gh/eliocamp/metR/branch/master/graph/badge.svg?token=jVznWTMCpz)](https://app.codecov.io/gh/eliocamp/metR)
 [![CRAN
-status](http://www.r-pkg.org/badges/version/metR)](https://cran.r-project.org/package=metR)
+status](https://www.r-pkg.org/badges/version/metR)](https://CRAN.R-project.org/package=metR)
 [![DOI](https://zenodo.org/badge/96357263.svg)](https://zenodo.org/badge/latestdoi/96357263)
+
+<!-- badges: end -->
 
 metR packages several functions and utilities that make R better for
 handling meteorological data in the tidy data paradigm. It started
@@ -42,7 +45,10 @@ install.packages("metR")
 Or the development version with:
 
 ``` r
-install.packages("metR", repos = c("https://eliocamp.github.io/metR", getOption("repos")))
+if (!requireNamespace("pak", quietly = TRUE)) {
+    install.packages("pak")
+}
+pak::pak("metR")
 ```
 
 If you need to read netcdf files, you might need to install the netcdf
@@ -68,8 +74,8 @@ citation("metR")
 #>     title = {metR: Tools for Easier Analysis of Meteorological Fields},
 #>     author = {Elio Campitelli},
 #>     year = {2021},
-#>     note = {R package version 0.15.0},
-#>     url = {https://eliocamp.github.io/metR/},
+#>     note = {R package version 0.16.0},
+#>     url = {https://eliocamp.github.io/metR/, https://github.com/eliocamp/metR},
 #>     doi = {10.5281/zenodo.2593516},
 #>   }
 ```
@@ -108,6 +114,9 @@ ggplot(aao$left, aes(lon, lat)) +
     coord_polar()
 #> Warning in .check_wrap_param(list(...)): 'xwrap' and 'ywrap' will be
 #> deprecated. Use ggperiodic::periodic insead.
+#> Warning: Computation failed in `stat_streamline()`.
+#> Caused by error in `[.data.table`:
+#> ! Supplied 10 items to be assigned to group 1 of size 9 in column 'step'. The RHS length must either be 1 (single values are ok) or match the LHS length exactly. If you wish to 'recycle' the RHS please use rep() explicitly to make this intent clear to readers of your code.
 ```
 
 ![](man/figures/field-1.png)<!-- -->

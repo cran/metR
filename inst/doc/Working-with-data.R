@@ -58,13 +58,6 @@ ggplot(air[, .(air = mean(air) - 273.15), by = .(lat, land)],
   geom_line(aes(color = land))
 
 ## -----------------------------------------------------------------------------
-# Not run because it needs internet access
-# rad <- GetSMNData(as.Date("2018-03-15"), type = "radiation")
-
-# ggplot(rad, aes(date, global)) + 
-#     geom_line(aes(color = station))
-
-## -----------------------------------------------------------------------------
 data(geopotential)
 # Weigthed geopotential anomaly
 geopotential[, gh.t.w := Anomaly(gh)*sqrt(cos(lat*pi/180)), by = .(lon, lat, month(date))]

@@ -2,8 +2,8 @@
 % Please edit documentation in R/metR-package.R
 \docType{package}
 \name{metR}
-\alias{metR}
 \alias{metR-package}
+\alias{metR}
 \title{metR: Tools for Easier Analysis of Meteorological Fields}
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
@@ -14,15 +14,15 @@ Many useful functions and extensions for dealing with meteorological data in the
 
 Conceptually it's divided into \emph{visualization tools} and \emph{data tools}.
 The former are geoms, stats and scales that help with plotting using
-\link{ggplot2}, such as \link{stat_contour_fill} or \link{scale_y_level}, while the
+'ggplot2', such as \link{stat_contour_fill} or \link{scale_y_level}, while the
 later are functions for common data processing tools in the atmospheric
 sciences, such as \link{Derivate} or \link{EOF}; these are implemented to work in the
-\link{data.table} paradigm, but also work with regular data frames.
+'data.table' paradigm, but also work with regular data frames.
 
 To get started, check the vignettes:
 \itemize{
 \item Visualization Tools: \code{vignette("Visualization-tools", package = "metR")}
-\item Working with Data: \code{vignette("Working-with-data", package = "metR")}
+\item Working with Data: \code{vignette("Working-with-data", package = "metR")    }
 }
 }
 
@@ -30,6 +30,7 @@ To get started, check the vignettes:
 Useful links:
 \itemize{
   \item \url{https://eliocamp.github.io/metR/}
+  \item \url{https://github.com/eliocamp/metR}
   \item Report bugs at \url{https://github.com/eliocamp/metR/issues}
 }
 
