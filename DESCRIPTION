@@ -2,7 +2,7 @@ Type: Package
 Package: metR
 Language: en-GB
 Title: Tools for Easier Analysis of Meteorological Fields
-Version: 0.16.0
+Version: 0.17.0
 Authors@R: 
     c(person(given = "Elio",
            family = "Campitelli",
@@ -29,8 +29,8 @@ LazyData: true
 RoxygenNote: 7.3.2
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2024-10-14 08:45:19 UTC; user1
+Packaged: 2025-01-12 06:08:49 UTC; elio
 Author: Elio Campitelli [cre, aut] (<https://orcid.org/0000-0002-7742-9230>)
 Maintainer: Elio Campitelli <eliocampitelli@gmail.com>
 Repository: CRAN
-Date/Publication: 2024-10-14 09:20:05 UTC
+Date/Publication: 2025-01-13 19:50:02 UTC
