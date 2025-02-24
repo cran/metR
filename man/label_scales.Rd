@@ -19,7 +19,6 @@ scale_label_alpha_continuous(
 )
 
 scale_label_size_continuous(
-  name = waiver(),
   breaks = waiver(),
   labels = waiver(),
   limits = NULL,
@@ -67,11 +66,6 @@ the same time, via aesthetics = c("colour", "fill").}
 or "legend" for discrete colour legend.}
 
 \item{range}{Output range of alpha values. Must lie between 0 and 1.}
-
-\item{name}{The name of the scale. Used as the axis or legend title. If
-\code{waiver()}, the default, the name of the scale is taken from the first
-mapping used for that aesthetic. If \code{NULL}, the legend title will be
-omitted.}
 
 \item{breaks}{One of:
 \itemize{

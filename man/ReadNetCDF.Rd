@@ -79,6 +79,21 @@ latitude as \code{lat}, then you can use:
 \preformatted{
 subset = list(lat = -90:0)
 }
+
+To use dimension indices instead of values, wrap the expression in \code{\link[base:AsIs]{base::I()}}.
+For example to read the first 10 timesteps of a file:
+
+\preformatted{
+subset = list(time = I(1, 10))
+}
+
+Negative indices are interpreted as starting from the end.
+So to read the last 10 timesteps of a file:
+
+\preformatted{
+subset = list(time = I(-10, 0))
+}
+
 More complex subsetting operations are supported. If you want to read non-contiguous
 chunks of data, you can specify each chunk into a list inside \code{subset}. For example
 this subset
@@ -159,7 +174,7 @@ field <- ReadNetCDF(ncfile, subset = list(M = 1,
 
 # Using a function in `vars` to read all variables that
 # start with "radar_".
-ReadNetCDF(radar_file, vars = \(x) startsWith(x, "radar_"))
+ReadNetCDF(radar_file, vars = function(x) startsWith(x, "radar_"))
 
 }
 }

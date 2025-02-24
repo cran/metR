@@ -110,7 +110,7 @@ ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
 ggplot(temperature[lev == 300], aes(lon, lat, z = air.z)) +
     geom_contour_fill() +
     geom_contour2(color = "black") +
-    geom_text_contour(stroke = 0.2, label.placement = label_placement_random()) +
+    geom_text_contour(stroke = 0.2, label.placer = label_placer_random()) +
     scale_fill_divergent() 
 
 ## -----------------------------------------------------------------------------
