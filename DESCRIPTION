@@ -2,7 +2,7 @@ Type: Package
 Package: metR
 Language: en-GB
 Title: Tools for Easier Analysis of Meteorological Fields
-Version: 0.18.0
+Version: 0.18.1
 Authors@R: 
     c(person(given = "Elio",
            family = "Campitelli",
@@ -21,7 +21,7 @@ Imports: checkmate, data.table, digest, Formula, formula.tools, ggplot2
         (>= 3.5.0), grid, gtable, memoise, plyr, scales, sf, stringr,
         purrr, isoband, lubridate
 Suggests: maps, covr, irlba, knitr, ncdf4, pkgdown, reshape2, markdown,
-        testthat (>= 2.1.0), viridis, PCICt, gridExtra, vdiffr, proj4,
+        testthat (>= 2.1.0), viridis, CFtime, gridExtra, vdiffr, proj4,
         kriging, terra, here, gsignal, rnaturalearth
 ByteCompile: yes
 Encoding: UTF-8
@@ -29,8 +29,9 @@ LazyData: true
 RoxygenNote: 7.3.2
 VignetteBuilder: knitr
 NeedsCompilation: no
-Packaged: 2025-02-24 06:16:41 UTC; user1
-Author: Elio Campitelli [cre, aut] (<https://orcid.org/0000-0002-7742-9230>)
+Packaged: 2025-05-13 04:07:07 UTC; user1
+Author: Elio Campitelli [cre, aut] (ORCID:
+    <https://orcid.org/0000-0002-7742-9230>)
 Maintainer: Elio Campitelli <eliocampitelli@gmail.com>
 Repository: CRAN
-Date/Publication: 2025-02-24 08:20:06 UTC
+Date/Publication: 2025-05-13 06:30:01 UTC

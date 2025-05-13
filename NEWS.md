@@ -1,3 +1,14 @@
+# metR 0.18.1
+
+## New features
+
+-   `geom_streamline()` will replace missing values with zeroes.
+-   New `ParseNetCDFtime()` to quickly parse netCDF time axes.
+
+## Potentially breaking changes
+
+-   `ReadNetCDF()`\` now uses the CFtime package to parse times. This shouldn't lead to any braking changes, but times are weird and anything can happen. Please report anything amiss.
+
 # metR 0.18.0
 
 ## New features

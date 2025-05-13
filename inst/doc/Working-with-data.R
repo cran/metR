@@ -4,7 +4,8 @@ collapse = TRUE,
 comment = "#>",
 dev = "jpeg",
 fig.width = 7,
-cache = FALSE
+cache = FALSE,
+eval = requireNamespace("ncdf4") && requireNamespace("CFtime")
 )
 data.table::setDTthreads(1)
 
